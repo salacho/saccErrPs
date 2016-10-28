@@ -34,7 +34,7 @@ warning('You should be using popDcdErrPsIterParams.m instead!!!')
 if 1 == 0
     % Getting all sessions
     cd ../helpers/
-    [allChicoSessionList,~] = chicoBCIsessions;
+    [allChicoSessionList,~] = chicoBCIsessions(1);
     
     % For preliminary Data
     %allChicoSessionList = {allChicoSessionList{2:8,:}}';

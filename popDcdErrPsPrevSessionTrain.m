@@ -1,11 +1,23 @@
-function popDcdErrPsPrevSessionTrain
+function popDcdErrPsPrevSessionTrain(subjName,numTrainSessions)
 % function popDcdErrPsPrevSessionTrain
 %
 % Runs error detection using a decoder trained with data from a previous
-% session (the one from the last session). All data is saved in a structure 
-% containing all params, all sessions decoded and decoders used. All the 
-% data is used to train the decoder.
-%
+% session (the one from the last session or from previous sessions). 
+% All data is saved in a structure containing all params, all sessions decoded 
+% and decoders used. 
+% 
+% INPUT 
+% subjName:             string. Name of the subject. Can be 'chico' or
+%                       'jonah'. Determines what session list are used for 
+%                       the training.
+% numTrainSessions:     integer. Number of previous sessions used to train
+%                       a decoder. The sessions chosen come from the list
+%                       loaded from chicoBCIsessions or jonahBCISessions 
+%                       (for Chico and Jonah respectively) and are automatically 
+%                       extracted from this list.  The files loaded are in the 
+%                       popAnalysis folder under the following naming schema:
+%                       popFirstSession-LastSession-numTrainSessions-decoderUsed-train-[minTimeWind-maxTimeWindowsms]-[lowFiltBound-HighFiltBound]-predictFunct-arrays-featuresTimeWindowsUsed.mat        
+%                       e.g. 'popJS20140325-JS20140327-3-reg-train-[600-600ms]-[1.0-10Hz]-mn-FEF-PFC-50-100-100-150-150-250-250-350-350-600.mat'
 % OUTPUT
 % 
 % ErrorInfos:       cell. [numSessions x 1]. Contains all the ErrorInfo structure for each session trained.       
@@ -20,29 +32,43 @@ function popDcdErrPsPrevSessionTrain
 %                   This means dcdVals{1} = 'corrDcd'; dcdVals{2} = 'errorDcd'; ...
 % 
 % All these data is saved in disk. The naming scheme used has the following structure: 
-% 'popFirstSession-lastSession-numSessions-lastLoadDecoder-decoder-oldDcd-[preTime-portTimems]-[lowFreq-highFreqHz]-dcdPerf-bestParams'
-% i.e. 'popCS20120815-CS20130618-65-CS20130617-reg-oldDcd-[600-600ms]-[1.0-10Hz]-dcdPerf-bestParams.mat'
+% 'popFirstSession-lastSession-numSessions-lastLoadDecoder-decoder-oldDcd-[preTime-portTimems]-[lowFreq-highFreqHz]-dcdPerf-numTrainSessions'prevSessions'-bestParams'
+% i.e. 'popCS20120815-CS20130618-65-CS20130617-reg-oldDcd-[600-600ms]-[1.0-10Hz]-dcdPerf-1prevSessions-bestParams.mat'
 %
 % Author    : Andres
 % 
 % andres    : 1.1   : init. 19 March 2014
+% andres    : 1.2   : added Jonah compatibility and cleaned up the code. 11April 2014
 
-%% First need all sessions with tehir decoded build using 'alltrain' in ErrorInfo.decoder.typeVal 
+%% First need all sessions with their decoded build using 'alltrain' in 'popTrainMatrixPrevSessions.m' 
+% subjName = 'jonah';
+% numTrainSessions = 10;
 
 %% Dirs and Paths
 dirs = initErrDirs;               % Paths where all data is loaded from and where chronic Recordings analysis are saved
 userEmail = 'salacho1@gmail.com';
 
 %% Params iterated (that will change)
-arrayIndx       = [2,2];        
-availArrays     = {'PFC','SEF','FEF'};              
-rmvBaseline     = false;
-predFunction    = {'mean'};
-predSelectType  = {'none'};
-dataTransf      = {'zscore'};
+switch subjName
+    case 'chico', availArrays = {'PFC','SEF','FEF'}; arrayIndx  = [2,2];
+        warning('Using SEF for Chico!!!')  %#ok<*WNTAG>
+        rmvBaseline     = false;
+        predFunction    = {'mean'};
+        predSelectType  = {'none'};
+        dataTransf      = {'zscore'};
+    case 'jonah', availArrays = {'SEF','FEF','PFC'}; arrayIndx  = [2,3];
+        warning('Using FEF and PFC for Jonah!!!')  %#ok<*WNTAG>
+        rmvBaseline     = false;
+        predFunction    = {'mean'};
+        predSelectType  = {'none'};
+        dataTransf      = {'none'};
+end
 
 %% All sessions
-[sessionList,~] = chicoBCIsessions;
+switch subjName
+    case 'chico', [sessionList,~] = chicoBCIsessions(0,0);        % beforeSessions = 0, onlyNew = 1
+    case 'jonah', [sessionList,~] = jonahBCIsessions;
+end
 nSessions = length(sessionList);
 
 %% Initialize vbles
@@ -52,17 +78,25 @@ overallDcd  = nan(nSessions,1);
 oldDecoders = cell(nSessions,1); oldDecoders{1} = 'none';
 
 %% Start each session
-for iSession = 2:nSessions
+for iSession = numTrainSessions + 1:nSessions
     tStart = tic;
     session = sessionList{iSession};
-    % Use previous session trained decoder or an aggregatted of half the sessions
-    oldSession = sessionList{iSession - 1};     % previous sessions.
+    
+    trainSessions = sessionList(iSession - numTrainSessions:iSession-1);
+    firstSession = trainSessions{1};
+    lastSession = trainSessions{end};
+    
+    %Use previous session trained decoder or an aggregatted of half the sessions
+    oldSession     = sprintf('pop%s-%s-%i',firstSession,lastSession,numTrainSessions);      % AFSG (2014-03-21) was oldSession = sessionList{iSession - 1};     % previous sessions.
     oldDecoders{iSession} = oldSession;
     
     % Setup initial params
     ErrorInfo = setDefaultParams(session,dirs);
     % Load epochs (this does not depend on decoding params)
     [corrEpochs,incorrEpochs,~,ErrorInfo] = loadErrRPs(ErrorInfo);
+    
+    %% Safeguard for empty corrEpochs and incorrEpochs matrix
+    if any([isempty(corrEpochs),isempty(incorrEpochs)]), error('corrEpochs or incorrEpochs are empty matrices'); end
     
     %% Update ErrorInfo
     ErrorInfo = popDcdErrPsUpdateErrorInfo(ErrorInfo,1,1,1,1,1,...
@@ -90,7 +124,6 @@ for iSession = 2:nSessions
     disp('')
     %% Email me, end of ErrP analysis
     emailme('dataconversionstate@gmail.com','DataConversionState','Finished allTest DcdErrPs',['Finished ',session,' in ',num2str(tElapsed/60),' min.'],userEmail);
-    
 end
 
 %% Saving decoded values for all params
@@ -109,7 +142,7 @@ else
 end
 
 rootFilename = createFileForm(decoder,ErrorInfo,'popDcd');                 %#ok<*NASGU>
-saveFilename = sprintf('%s-dcdPerf-bestParams.mat',rootFilename);
+saveFilename = sprintf('%s-dcdPerf-%iprevSessions-bestParams.mat',rootFilename,numTrainSessions);       % (AFSG 2014-3-22) was saveFilename = sprintf('%s-dcdPerf-bestParams.mat',rootFilename);
 %% Save files
 %save(saveFilename,'ErrorInfos','iterParams','dcdErrors','dcdVals','sessionList') 
 save(saveFilename,'ErrorInfos','dcdVals') 

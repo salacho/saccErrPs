@@ -239,7 +239,7 @@ if (length(EyeLfp) == length(EyePupil)) == (length(EyeX) == length(EyeY))
     eyeTraces.incorrDcdTgt = OutcomeInfo.(iOutVal).Response;
     
     % Complete name of eye traces to be saved
-    if ErrorInfo.eyeTraces.saveEyeTraces
+    if ErrorInfo.eyeTraces.saveTraces
     saveEyeFilename = sprintf('%s-corrIncorrEyeTrace-[%i-%ims].mat',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
         ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime);
     save(saveEyeFilename ,'eyeTraces','ErrorInfo')

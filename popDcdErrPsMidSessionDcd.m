@@ -25,9 +25,14 @@ function popDcdErrPsMidSessionDcd
 % Author    : Andres
 % 
 % andres    : 1.1   : init. 19 March 2014
+% andres    : 1.1   : init. 20 March 2014. 
+
+error('THIS CODE IS OLD, only supports Chico''s data, and has not been updated!!! You should be using ''popDcdErrPsPrevSessionTrain.m''')
+return
 
 %% First need all sessions with tehir decoded build using 'alltrain' in ErrorInfo.decoder.typeVal 
 doMidSessions = 1;
+if doMidSessions, numTrainSessions = 10; end
 
 %% Dirs and Paths
 dirs = initErrDirs;               % Paths where all data is loaded from and where chronic Recordings analysis are saved
@@ -42,9 +47,13 @@ predSelectType  = {'none'};
 dataTransf      = {'zscore'};
 
 %% All sessions
-[sessionList,~] = chicoBCIsessions;
+[sessionList,sessionsBCIperf] = chicoBCIsessions;
 nSessions = length(sessionList);
-midSessions = round(nSessions/2);
+if numTrainSessions == 33
+    midSessions = round(nSessions/2);
+else
+    midSessions = 0;
+end
 
 %% Initialize vbles
 corrDcd     = nan(nSessions,1);
@@ -64,9 +73,9 @@ for iSession = midSessions + 1:nSessions
     session = sessionList{iSession};
     % Use previous session trained decoder or an aggregatted of half the sessions
     if doMidSessions
-        oldSession = oldDcdMidSessions;         % half the sessions
+        oldSession = oldDcdMidSessions;             % half the sessions
     else
-        oldSession = sessionList{iSession - 1};     % previous sessions.
+        oldSession = sessionList{iSession - 1};     %#ok<*UNRCH> % previous sessions.
     end
     oldDecoders{iSession} = oldSession;
     
@@ -80,12 +89,14 @@ for iSession = midSessions + 1:nSessions
         availArrays,arrayIndx,rmvBaseline,predFunction,predSelectType,dataTransf,oldSession);
     
     %% Old decoder
-    % Create fullname of decoder to load
-    loadFilename = createFileForm(ErrorInfo.decoder,ErrorInfo,'popTest');                 %#ok<*NASGU>
-    loadDecoder = load(loadFilename);                                   % includes: newB, decoder, ErrorInfo
-    ErrorInfo.decoder.oldDecoder = loadDecoder.oldB;
-    % Updating dataTransfVals from 'oldSession' decoder to apply to the new one.
-    ErrorInfo.decoder.dataTransfVals = loadDecoder.decoder.dataTransfVals;
+    if doMidSessions
+        % Create fullname of decoder to load
+        loadFilename = createFileForm(ErrorInfo.decoder,ErrorInfo,'popTest');                 %#ok<*NASGU>
+        loadDecoder = load(loadFilename);                                   % includes: newB, decoder, ErrorInfo
+        ErrorInfo.decoder.oldDecoder = loadDecoder.oldB;
+        % Updating dataTransfVals from 'oldSession' decoder to apply to the new one.
+        ErrorInfo.decoder.dataTransfVals = loadDecoder.decoder.dataTransfVals;
+    end
     
     %% Signal processing
     [corrEpochsProcess,incorrEpochsProcess,ErrorInfo] = signalProcess(corrEpochs,incorrEpochs,ErrorInfo);
@@ -108,7 +119,7 @@ for iSession = midSessions + 1:nSessions
     sprintf('It took %0.2f seconds to run session %s...\n',tElapsed, session)
     disp('')
     %% Email me, end of ErrP analysis
-    emailme('dataconversionstate@gmail.com','DataConversionState','Finished midSessions popTest DcdErrPs',['Finished ',session,' in ',num2str(tElapsed/60),' min.'],userEmail);
+    emailme('dataconversionstate@gmail.com','DataConversionState','Finished oldDcd popTest DcdErrPs',['Finished ',session,' in ',num2str(tElapsed/60),' min.'],userEmail);
 end
 
 %% Saving decoded values for all params
@@ -120,9 +131,19 @@ dcdVals{5} = oldDecoders;
 dcdVals{6} = {'corrDcd','errorDcd','overallDcd','sessionList','oldDecoders'};
 
 % Session for the population 
-ErrorInfo.session = sprintf('pop%s-%s-%i-%s',sessionList{midSessions+1},sessionList{end},nSessions-midSessions,ErrorInfo.decoder.oldSession);
+if doMidSessions
+    ErrorInfo.session = sprintf('pop%s-%s-%i-%s',sessionList{midSessions+1},sessionList{end},nSessions-midSessions,ErrorInfo.decoder.oldSession);
+    rootFilename = createFileForm(decoder,ErrorInfo,'popTest');                 %#ok<*NASGU>
+else
+    % Session for the population
+    if ErrorInfo.decoder.loadDecoder            % Add loaded decoder
+        ErrorInfo.session = sprintf('pop%s-%s-%i-%s',sessionList{1},sessionList{end},length(sessionList),'alltest');
+    else
+        ErrorInfo.session = sprintf('pop%s-%s-%i',sessionList{1},sessionList{end},length(sessionList));
+    end
+    rootFilename = createFileForm(decoder,ErrorInfo,'popDcd');                 %#ok<*NASGU>
+end
 
-rootFilename = createFileForm(decoder,ErrorInfo,'popTest');                 %#ok<*NASGU>
 saveFilename = sprintf('%s-dcdPerf-bestParams.mat',rootFilename);
 %% Save files
 %save(saveFilename,'ErrorInfos','iterParams','dcdErrors','dcdVals','sessionList') 

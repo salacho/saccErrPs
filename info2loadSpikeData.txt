@@ -1,0 +1,37 @@
+BCIinfo.filedate 
+BCIinfo.BCIparams.eccent
+BCIinfo.BCIparams.verbose
+BCIinfo.BCIparams.nLocations
+BCIinfo.BCIparams.lateralTgts
+
+BCIinfo.BCIparams.spikeType
+BCIinfo.BCIparams.lumpUnits
+BCIinfo.BCIparams.useChnlsWithUnitsOnly
+
+% BCIinfo.BCIparams.spkDoPhiBinning
+BCIinfo.BCIparams.spkDoPhiBinning
+BCIinfo.BCIparams.lfpSrcFiletype
+BCIinfo.smpRate
+BCIinfo.lfpSmpRate
+
+% if BCIinfo.BCIparams.referenceLfps
+BCIinfo.BCIparams.referenceLfps
+BCIinfo.BCIparams.spkPhiFiltParams.b 
+BCIinfo.BCIparams.spkPhiFiltParams.a
+
+% BCIinfo.BCIparams.lumpUnits
+
+
+BCIinfo.BCIparams.nSpkBins
+BCIinfo.BCIparams.analTimeEpoch
+BCIinfo.BCIparams.nSpkTimeBins
+BCIinfo.BCIparams.spkTimeBinEdges
+BCIinfo.BCIparams.spkPhiBinCntrs
+
+
+
+unitStr = sprintf('nrn_c%03d_u%02d', ch, Units(unit));  
+
+chStr = sprintf('ch%d',ch);   
+BCIdata.(chStr).spikeCount=0; 
+

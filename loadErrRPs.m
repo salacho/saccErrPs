@@ -1,5 +1,5 @@
-function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = loadErrRPs(mainParams)
-% function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = loadErrRPs(mainParams)
+function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = loadErrRPs(ErrorInfo)
+% function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = loadErrRPs(ErrorInfo)
 % 
 % Loads ErrRPs files containing both correct and incorrect epochs (based on 
 % the decoder selections) using the time stamps given by pre and post 
@@ -7,7 +7,7 @@ function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = loadErrRPs(mainParams)
 % incorrect stimuli. All used params are in mainParams. See below for more info. 
 %
 % INPUT
-% mainParams:       structure with fields used to load, filter and epoch files
+% ErrorInfo:       structure with fields used to load, filter and epoch files
 %   session:        string. Name of the session, usually in the form 'CS20120910'.
 %   nChs:           integer. total number of channels. Need to un-hard code this
 %   freqRange:      vector. low and high freq. values to filter data
@@ -28,9 +28,6 @@ function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = loadErrRPs(mainParams)
 % Created 14 June 2013
 % Last modiffied 05 Sept 2013
 
-%% Params
-ErrorInfo = mainParams;
-
 %% Initial values and paths
 % type of data from which epochs are taken from
 switch ErrorInfo.epochInfo.typeRef
@@ -39,8 +36,21 @@ switch ErrorInfo.epochInfo.typeRef
     case 'car',  strgRef = 'car';
 end
 
+infoStr = getInfoStr(ErrorInfo);
+
+% For backwards compatibility
+infoStr2 = infoStr;
+if or(strcmp(infoStr.downSampStr,'downSamp1'),strcmp(infoStr.downSampStr,'-downSamp1')) 
+    infoStr2.downSampStr= '';
+end
+
+if strcmp(infoStr.strFiltType,'butt'), infoStr2.strFiltType = '';
+end 
+if strcmp(infoStr.strSuffix,'-downSamp1[600-600ms]-butt4[1.0-10Hz]'),infoStr2.strSuffix ='-[600-600ms]-[1.0-10Hz]';
+end
+      
 %% Load ErrPs
-if mainParams.epochInfo.doErrPs
+if ErrorInfo.epochInfo.doErrPs
     if ~isfield(ErrorInfo.epochInfo,'NewErrPs')
         ErrorInfo.epochInfo.NewErrPs = 0;
     end
@@ -53,13 +63,26 @@ if mainParams.epochInfo.doErrPs
     %% Loading ErrPs files
     tStart = tic;
     % Complete name of epochs file to be loaded
-    loadFilename = sprintf('%s-corrIncorrEpochs-%s[%i-%ims]-[%0.1f-%iHz].mat',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-        strgRef,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+    loadFilename = sprintf('%s-corrIncorrEpochs%s.mat',infoStr.strPrefix,infoStr.strSuffix);
+    loadFilename2 = sprintf('%s-corrIncorrEpochs%s.mat',infoStr2.strPrefix,infoStr2.strSuffix);
+    
+    %loadFilenameOld = sprintf('%s-corrIncorrEpochs-%s[%i-%ims]-[%0.1f-%iHz].mat',infoStr.strPrefix,strgRef,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+    
+%     % For backwards compatibility!
+%     if (strcmp(ErrorInfo.epochInfo.filtType,'butter')) && (ErrorInfo.epochInfo.filtOrder == 4) && exist(loadFilenameOld,'file')
+%         loadFilename = loadFilenameOld;
+%     else loadFilename = loadFilenameNew;
+%     end
+        
     % Loading...
     % If files exists, just load it
-    if exist(loadFilename,'file')
-        fprintf('Patience...loading file %s\n',loadFilename);
-        ErrRPs       = load(loadFilename);
+    if or(exist(loadFilename,'file'),exist(loadFilename2,'file'))
+        if exist(loadFilename,'file'), fprintf('Patience...loading file %s\n',loadFilename);
+            ErrRPs = load(loadFilename);
+        else fprintf('Patience...loading file %s\n',loadFilename2); 
+            ErrRPs = load(loadFilename2);
+        end
+        
         tElapsed     = toc(tStart);
         fprintf('Loading took %0.2d seconds\n',tElapsed)
         % Separate files 
@@ -67,17 +90,61 @@ if mainParams.epochInfo.doErrPs
         incorrEpochs = ErrRPs.incorrEpochs;      % incorrect epochs
         
         % Vbles from loaded 'ErrorInfo' that need to be recovered!!
+        % Specially after downsampling!!
         ErrorInfo.epochInfo.corrExpTgt      = ErrRPs.ErrorInfo.epochInfo.corrExpTgt; 
         ErrorInfo.epochInfo.corrDcdTgt      = ErrRPs.ErrorInfo.epochInfo.corrDcdTgt; 
         ErrorInfo.epochInfo.incorrExpTgt    = ErrRPs.ErrorInfo.epochInfo.incorrExpTgt; 
         ErrorInfo.epochInfo.incorrDcdTgt    = ErrRPs.ErrorInfo.epochInfo.incorrDcdTgt; 
         ErrorInfo.epochInfo.Fs              = ErrRPs.ErrorInfo.epochInfo.Fs; 
+        ErrorInfo.specParams.params.Fs      = ErrorInfo.epochInfo.Fs;
+        
         % AFSG (2014-02-27) ErrorInfo = ErrRPs.ErrorInfo;         % info structure. Do not replace info structure, what matters is what we currently have. This files have not changed   
         
         % To solve backwards compatibility issues
         ErrorInfo.epochInfo.nCorr = size(corrEpochs,2);
         ErrorInfo.epochInfo.nError = size(incorrEpochs,2);
+        ErrorInfo.epochInfo.numSamps = size(corrEpochs,3);
 
+        % Adding the events, behav and BCI info
+        % Kludge! new files have different info structure fields. (AFSG-20141023)
+        if ~isfield(ErrRPs.ErrorInfo,'BCItrialInfo')
+            [dummyInfo,~] = getOutcmInfo(ErrorInfo,ErrorInfo.epochInfo.blockType,ErrorInfo.epochInfo.decodOnly);        %Get all events and possible outcomes
+            ErrRPs.ErrorInfo.BCItrialInfo = dummyInfo.BCItrialInfo;
+        else
+            ErrorInfo.BCItrialInfo = ErrRPs.ErrorInfo.BCItrialInfo;
+        end
+        % Kludge! Adding previous trial info
+        if ~isfield(ErrRPs.ErrorInfo.epochInfo,'incorrPrevTrialDcdTgt')
+            warning('Cannot find previous trial info...loading it!!...') 
+            
+            % KLUDGE!!! Going to server for data
+            origDataIn = ErrorInfo.dirs.DataIn;
+            ErrorInfo.dirs.DataIn = 'Z:\bci\mat';
+            [~,OutcomeInfo] = getOutcmInfo(ErrorInfo,ErrorInfo.epochInfo.blockType,ErrorInfo.epochInfo.decodOnly);        %Get all events and possible outcomes
+            ErrorInfo.dirs.DataIn = origDataIn;
+            
+            iOutVal = 'outcm1';
+            ErrorInfo.epochInfo.corrExpTgt = OutcomeInfo.(iOutVal).ExpectedResponse;
+            ErrorInfo.epochInfo.corrDcdTgt = OutcomeInfo.(iOutVal).Response;
+            ErrorInfo.epochInfo.corrPrevTrialDcdTgt = OutcomeInfo.(iOutVal).prevTrialResponse;            % Previous trial true response
+            ErrorInfo.epochInfo.corrPrevTrialExpTgt = OutcomeInfo.(iOutVal).preTrialExpectedResponse;     % Previous trial expected response
+            iOutVal = 'outcm7';
+            ErrorInfo.epochInfo.incorrExpTgt = OutcomeInfo.(iOutVal).ExpectedResponse;
+            ErrorInfo.epochInfo.incorrDcdTgt = OutcomeInfo.(iOutVal).Response;
+            ErrorInfo.epochInfo.incorrPrevTrialDcdTgt = OutcomeInfo.(iOutVal).prevTrialResponse;            % Previous trial true response
+            ErrorInfo.epochInfo.incorrPrevTrialExpTgt = OutcomeInfo.(iOutVal).preTrialExpectedResponse;     % Previous trial expected response
+        else
+            ErrorInfo.epochInfo.corrPrevTrialDcdTgt = ErrRPs.ErrorInfo.epochInfo.corrPrevTrialDcdTgt;            % Previous trial true response
+            ErrorInfo.epochInfo.corrPrevTrialExpTgt = ErrRPs.ErrorInfo.epochInfo.corrPrevTrialExpTgt;     % Previous trial expected response
+            ErrorInfo.epochInfo.incorrPrevTrialDcdTgt = ErrRPs.ErrorInfo.epochInfo.incorrPrevTrialDcdTgt;            % Previous trial true response
+            ErrorInfo.epochInfo.incorrPrevTrialExpTgt = ErrRPs.ErrorInfo.epochInfo.incorrPrevTrialExpTgt;     % Previous trial expected response
+        end
+        
+        ErrorInfo.Behav = ErrRPs.ErrorInfo.Behav;
+     	ErrorInfo.EventInfo = ErrRPs.ErrorInfo.EventInfo;
+
+        warning('Do not use signalProcess nor decoder fields from old ErrorInfo structure!!') 
+        
 % AFSG (2014-02-27) Do not need this since the latest ErrorInfo will be saved!!
 %         % Solving problems with new params for backward compatibility
 %         if isfield(ErrorInfo.epochInfo,'baselineLen')
@@ -119,9 +186,9 @@ if mainParams.epochInfo.doErrPs
         % If files do not exits, create them
     elseif ErrorInfo.epochInfo.NewErrPs
         fprintf('Could not find %s...\nRunning all channels instead...\n',loadFilename);
-        [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(mainParams);
+        [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(ErrorInfo); %#ok<ASGLU>
     else
-        warning('Could not find %s\n and ''NewErrPs'' flag is set to false. No more analysis will be done!!...\n',loadFilename)
+        warning('Could not find %s\n and ''NewErrPs'' flag is set to false. No more analysis will be done!!...\n',loadFilename) %#ok<*WNTAG>
         corrEpochs = []; incorrEpochs = [];
     end
     
@@ -141,7 +208,7 @@ ErrorInfo.dirs.PTB          = newDirs.PTB;
 ErrorInfo.dirs.saveFilename = fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session);
 
 %% Loading eye traces
-if mainParams.eyeTraces.doEyes
+if ErrorInfo.eyeTraces.doEyes
     % Complete name of eye traces to be loaded
     loadEyeFilename = sprintf('%s-corrIncorrEyeTrace-[%i-%ims].mat',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
         ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime);
@@ -152,8 +219,8 @@ if mainParams.eyeTraces.doEyes
         % If eyeTraces file does not exist, get it
     else
         fprintf('Could not find %s...\nReading and epoching all eye traces instead...\n',loadEyeFilename);
-        [eyeTraces,ErrorInfo] = getEyeTraces(ErrorInfo);
-        ErrorInfo.eyeTraces = mainParams.eyeTraces;  % Load and run analysis on eye traces (i.e. pupilometry for performance monitoring)
+        [eyeTraces,ErrorInfo] = getEyeTraces(ErrorInfo); 
+        % Load and run analysis on eye traces (i.e. pupilometry for performance monitoring)
     end
 else
     eyeTraces = [];

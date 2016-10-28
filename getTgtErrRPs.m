@@ -42,9 +42,22 @@ function [tgtErrRPs,ErrorInfo] = getTgtErrRPs(corrEpochs,incorrEpochs,ErrorInfo)
 % Created 14 June 2013
 % Last modified 11 July 2013
 
+disp('Separating trials per true target location...')
+
 Tgts = unique(ErrorInfo.epochInfo.corrExpTgt)';
 nTgts = length(Tgts);
 
+% Set structure
+tgtErrRPs = repmat(struct(...
+            'corrEpochs',[],...         % matrix of correct trials for this expected target location. [nChs x nTrials x nSamples]
+            'incorrEpochs',[],...       % matrix of incorrect trials for this expected target location. [nChs x nTrials x nSamples]
+            'incorrDcdTgt',[], ...      % vector. List of incorrectly decoded targets [number Incorrectly decoded Trials] for each specific true target location
+            'nIncorrDcdTgts',[], ...    % vector. Number of trials incorrectly decoded for each of the possible target locations
+            'nIncorrTrials',[], ...     % integer. total number of trials incorrectly decoded for this specific true target location
+            'normIncorrDcdTgts',[]),... % vector. Number of trials incorrectly decoded for each of the possible target locations normalized by the total number of trials incorrectly decoded for this true target (normalized by 'tgtErrRPs(iTgt).nIncorrTrials')
+            [1 nTgts]);
+
+% Analyze each target
 for iTgt = 1:nTgts
     % Correct epochs
     iTgtCorrEpochs = (Tgts(iTgt) == ErrorInfo.epochInfo.corrExpTgt);
@@ -57,6 +70,14 @@ for iTgt = 1:nTgts
     ErrorInfo.epochInfo.nCorrEpochsTgt(iTgt) = size(tgtErrRPs(iTgt).corrEpochs,2);
     ErrorInfo.epochInfo.nIncorrEpochsTgt(iTgt) = size(tgtErrRPs(iTgt).incorrEpochs,2);
 	ErrorInfo.epochInfo.ratioCorrIncorr(iTgt) = ErrorInfo.epochInfo.nIncorrEpochsTgt(iTgt)./ErrorInfo.epochInfo.nCorrEpochsTgt(iTgt);
+
+
+    % Getting for each expected target location the number of trials decoded to other locations, using the dist2Tgt info
+    for iiTgt = 1:nTgts
+        tgtErrRPs(iTgt).nIncorrDcdTgts(iiTgt) = sum(tgtErrRPs(iTgt).incorrDcdTgt == iiTgt);
+    end
+    tgtErrRPs(iTgt).nIncorrTrials = sum(tgtErrRPs(iTgt).nIncorrDcdTgts);
+    tgtErrRPs(iTgt).normIncorrDcdTgts = tgtErrRPs(iTgt).nIncorrDcdTgts/tgtErrRPs(iTgt).nIncorrTrials; 
 end
 
 ErrorInfo.epochInfo.Tgts = Tgts;

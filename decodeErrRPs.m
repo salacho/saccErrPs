@@ -144,15 +144,15 @@ if ~decoder.loadDecoder
     end
     %% Saving best decoder
     if decoder.saveDecoder
-        fprintf('Saving the best decoder...\n')
         saveFilename = createFileForm(decoder,ErrorInfo,'decoder');
+        fprintf('Saving the best decoder as %s...\n',saveFilename)
         ErrorInfo.decoder = decoder;
-        save(saveFilename,'oldB','decoder','ErrorInfo') 
+        save(saveFilename,'oldB','decoder','ErrorInfo')
     end
     
     % if loading previously trained decoder
 else
-    fprintf('Using all data for testing, using decoder trained with session %s...\n',decoder.oldSession)
+    warning('Using all data for testing, using decoder trained with session %s...\n',decoder.oldSession) %#ok<*WNTAG>
     % Training and testing trial numbers
     nTest       = nTrials;
     nTrain      = 0;
@@ -172,6 +172,7 @@ else
         loadFilename = createFileForm(decoder,ErrorInfo,'decoder');
         decoder.saveDecoder = saveFlag;                                     % returning original value of saveDecoder
         loadDecoder = load(loadFilename);                                   % includes: newB, decoder, ErrorInfo
+        fprintf('Loading decoder %s\n',loadFilename)
         oldB = loadDecoder.oldB;
         % Updating dataTransfVals from 'oldSession' decoder to apply to the new one.
         ErrorInfo.decoder.dataTransfVals = loadDecoder.decoder.dataTransfVals;

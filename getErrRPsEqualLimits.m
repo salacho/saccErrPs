@@ -1,5 +1,5 @@
-function ErrorInfo = getErrRPsEqualLimits(corrEpochs,incorrEpochs,tgtErrRPs,tgt2DistEpochs,ErrorInfo)
-% function ErrorInfo = getErrRPsEqualLimits(corrEpochs,incorrEpochs,tgtErrRPs,tgt2DistEpochs,ErrorInfo);
+function ErrorInfo = getErrRPsEqualLimits(ErrorInfo,corrEpochs,incorrEpochs,tgtErrRPs,tgt2DistEpochs)
+% function ErrorInfo = getErrRPsEqualLimits(ErrorInfo,corrEpochs,incorrEpochs,tgtErrRPs,tgt2DistEpochs);
 %
 % Calculates the max. and min. vals for each mean and std epochs for 
 % channel, array and target. These values are used later to plot traces 
@@ -36,6 +36,9 @@ function ErrorInfo = getErrRPsEqualLimits(corrEpochs,incorrEpochs,tgtErrRPs,tgt2
 %         stdEpochDist1:    vector. Std of error epochs for distance 1 to target location
 %         stdEpochDist2:    vector. Std of error epochs for distance 2 to target location
 %         stdEpochDist3:    vector. Std of error epochs for distance 3 to target location
+%         sampErrEpochDist1:vector. Standard error mean of incorrect epochs for distance 1 to target location
+%         sampErrEpochDist2:vector. Standard error mean of incorrect epochs for distance 2 to target location
+%         sampErrEpochDist3:vector. Standard error mean of incorrect epochs for distance 3 to target location
 %         meanEpochDist1:   matrix. [numChannels numDatapoints]. Mean error epoch for distance 1 to target location
 %         meanEpochDist2:   matrix. [numChannels numDatapoints]. Mean error epoch for distance 2 to target location
 %         meanEpochDist3:   matrix. [numChannels numDatapoints]. Mean error epoch for distance 3 to target location
@@ -64,7 +67,7 @@ function ErrorInfo = getErrRPsEqualLimits(corrEpochs,incorrEpochs,tgtErrRPs,tgt2
 %                           lines 78-135
 % Andres. v1.0
 % Created 15 July 2013
-% Last modified: 18 July 2013
+% Last modified: 29 Oct 2014
 
 disp('Calculating equal limits for Y axis...')
 tStart = tic;                                                   % How long this code took?
@@ -133,113 +136,106 @@ yMin = struct(...
     'bothChDist2tgt',       nan(nTgts,nArrays),...              % max. val. for mean of dist2tgt per channel, array and target, for both correct and incorrect trials
     'bothMeanDist2tgt',     nan(nTgts,1));                      % max. val. for mean of channels and dist2tgt per array and target, for both correct and incorrect trials
 
-%% Getting epochs' mean and std per channel and per array
-if ndims(corrEpochs) == 3                           
-    meanCorrEpoch   = squeeze(mean(corrEpochs,2));          % mean epoch for correct trials
-    stdCorrEpoch    = squeeze(std(corrEpochs,0,2));         % std epoch for correct trials
-elseif ndims(corrEpochs) == 2                               %#ok<ISMAT>
-    meanCorrEpoch   = corrEpochs;                           % no mean since only one epoch for correct trials
-    stdCorrEpoch    = zeros(size(corrEpochs));              % std = 0 since only one epoch for correct trials
-end
-if ndims(incorrEpochs) == 3
-    meanIncorrEpoch = squeeze(mean(incorrEpochs,2));        % mean epoch for incorrect trials
-    stdIncorrEpoch  = squeeze(std(incorrEpochs,0,2));       % std epoch for incorrect trials
-elseif ndims(incorrEpochs) == 2                            	%#ok<ISMAT>
-    meanIncorrEpoch = incorrEpochs;                         % no mean epoch for incorrect trials, only 1 trial
-    stdIncorrEpoch  = zeros(size(incorrEpochs));            % std epoch for incorrect trials
-end
+%% Getting epochs' mean and st.dev/error per channel and per array
+tempFlag = ErrorInfo.epochInfo.getMeanArrayEpoch; ErrorInfo.epochInfo.getMeanArrayEpoch = true;
+[corrMeanTrials,incorrMeanTrials,corrStdTrials,incorrStdTrials,corrArrayMean,incorrArrayMean,corrArrayStd,incorrArrayStd] = ...
+    getMeanTrialsErrPs(corrEpochs,incorrEpochs,ErrorInfo);
+ErrorInfo.epochInfo.getMeanArrayEpoch = tempFlag;
 
 %% Getting max. and min. vals
-disp('For plotSingleErrRPs...')
-for ii = 1:nArrays
+disp('For plotSingleErrRPs and plotMeanErrRPs...')
+for iArray = 1:nArrays
     %% Getting max. and min. vals for epochs (for plotSingleErrRPs)
     % Values per array
-    corrVals    = meanCorrEpoch(1 + 32*(ii-1):32*ii,:);         % mean values incorrect trials for this array
-    incorrVals  = meanIncorrEpoch(1 + 32*(ii-1):32*ii,:);       % mean values incorrect trials for array
-    corrStd     = stdCorrEpoch(1 + 32*(ii-1):32*ii,:);          % std values correct trials for this array
-    incorrStd   = stdIncorrEpoch(1 + 32*(ii-1):32*ii,:);        % std values incorrect trials for this array
+    corrVals    = corrMeanTrials(ErrorInfo.plotInfo.arrayChs(iArray,:),:);         % mean values incorrect trials for this array
+    incorrVals  = incorrMeanTrials(ErrorInfo.plotInfo.arrayChs(iArray,:),:);       % mean values incorrect trials for array
+    corrStd     = corrStdTrials(ErrorInfo.plotInfo.arrayChs(iArray,:),:);          % st.dev or st.error values correct trials for this array
+    incorrStd   = incorrStdTrials(ErrorInfo.plotInfo.arrayChs(iArray,:),:);        % st.dev or st.error incorrect trials for this array
     
     % Max. and Min. vals. for Mean-Epochs
     if max(max(corrVals,[],2)) > maxError                   	% if values bigger than maxError, use a fixed one
-        yMax.corrMeanEpoch(ii)      = maxError;
-    else yMax.corrMeanEpoch(ii)     = max(max(corrVals,[],2));
+        yMax.corrMeanEpoch(iArray)      = maxError;
+    else yMax.corrMeanEpoch(iArray)     = max(max(corrVals,[],2));
     end
     if max(max(incorrVals,[],2))> maxError                      % if values bigger than maxError, use a fixed one
-        yMax.incorrMeanEpoch(ii)    = maxError;
-    else yMax.incorrMeanEpoch(ii)   = max(max(incorrVals,[],2));
+        yMax.incorrMeanEpoch(iArray)    = maxError;
+    else yMax.incorrMeanEpoch(iArray)   = max(max(incorrVals,[],2));
     end
     if min(min(corrVals,[],2)) < -maxError                      % if values smaller than -maxError, use a fixed one
-        yMin.corrMeanEpoch(ii)      = -maxError;
-    else yMin.corrMeanEpoch(ii)     = min(min(corrVals,[],2));
+        yMin.corrMeanEpoch(iArray)      = -maxError;
+    else yMin.corrMeanEpoch(iArray)     = min(min(corrVals,[],2));
     end
     if min(min(incorrVals,[],2)) < -maxError                    % if values smaller than -maxError, use a fixed one
-        yMin.incorrMeanEpoch(ii)    = -maxError;
-    else yMin.incorrMeanEpoch(ii)   = min(min(incorrVals,[],2));
+        yMin.incorrMeanEpoch(iArray)    = -maxError;
+    else yMin.incorrMeanEpoch(iArray)   = min(min(incorrVals,[],2));
     end
-    yMax.bothMeanEpoch(ii)  = max(yMax.corrMeanEpoch(ii),yMax.incorrMeanEpoch(ii));
-    yMin.bothMeanEpoch(ii)  = min(yMin.corrMeanEpoch(ii),yMin.incorrMeanEpoch(ii));
+    yMax.bothMeanEpoch(iArray)  = max(yMax.corrMeanEpoch(iArray),yMax.incorrMeanEpoch(iArray));
+    yMin.bothMeanEpoch(iArray)  = min(yMin.corrMeanEpoch(iArray),yMin.incorrMeanEpoch(iArray));
     
-    % Max. and Min. vals. for Error-Bars of Mean-Epochs
+    % Max. and Min. vals. for Error-Bars of Mean-Epochs per channel
     tmpMaxCorr = (max(corrVals + corrStd,[],2));                % max. values of error bars per channel
     if max(tmpMaxCorr) > maxError                               % STD values way too big for PFC array, make other channels too small, add a fixed boundary
-        yMax.errorCorrMeanEpoch(ii)     = maxError;
-    else yMax.errorCorrMeanEpoch(ii)    = max(tmpMaxCorr);
+        yMax.errorCorrMeanEpoch(iArray)     = maxError;
+    else yMax.errorCorrMeanEpoch(iArray)    = max(tmpMaxCorr);
     end
     tmpMaxIncorr = (max(incorrVals + incorrStd,[],2));          % max. values of error bars per channel
     if max(tmpMaxIncorr) > maxError                             % STD values way too big for PFC array, make other channels too small, add a fixed boundary
-        yMax.errorIncorrMeanEpoch(ii)   = maxError;
-    else yMax.errorIncorrMeanEpoch(ii)  = max(tmpMaxIncorr);
+        yMax.errorIncorrMeanEpoch(iArray)   = maxError;
+    else yMax.errorIncorrMeanEpoch(iArray)  = max(tmpMaxIncorr);
     end
-    yMax.errorBothMeanEpoch(ii)         = max(yMax.errorCorrMeanEpoch(ii),yMax.errorIncorrMeanEpoch(ii));
+    yMax.errorBothMeanEpoch(iArray)         = max(yMax.errorCorrMeanEpoch(iArray),yMax.errorIncorrMeanEpoch(iArray));
     tmpMinCorr = (min(corrVals - corrStd,[],2));                % min. values of error bars per channel
     if min(tmpMinCorr) < -maxError                              % STD values way too big for PFC array, make other channels too small, add a fixed boundary
-        yMin.errorCorrMeanEpoch(ii)     = -maxError;
-    else yMin.errorCorrMeanEpoch(ii)    = min(tmpMinCorr);
+        yMin.errorCorrMeanEpoch(iArray)     = -maxError;
+    else yMin.errorCorrMeanEpoch(iArray)    = min(tmpMinCorr);
     end
     tmpMinIncorr = (min(incorrVals - incorrStd,[],2));          % min. values of error bars per channel
     if min(tmpMinIncorr) < -maxError                            % STD values way too big for PFC array, make other channels too small, add a fixed boundary
-        yMin.errorIncorrMeanEpoch(ii)   = -maxError;
-    else yMin.errorIncorrMeanEpoch(ii)  = min(tmpMinIncorr);
+        yMin.errorIncorrMeanEpoch(iArray)   = -maxError;
+    else yMin.errorIncorrMeanEpoch(iArray)  = min(tmpMinIncorr);
     end
-    yMin.errorBothMeanEpoch(ii)         = min(yMin.errorCorrMeanEpoch(ii),yMin.errorIncorrMeanEpoch(ii));
+    yMin.errorBothMeanEpoch(iArray)         = min(yMin.errorCorrMeanEpoch(iArray),yMin.errorIncorrMeanEpoch(iArray));
     
-    %% Max. and Min. for Mean-channels (for plotMeanErrRPs)
+    %% Max. and Min. per array (for plotMeanErrRPs)
     %max. vals
-    if max(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1)) > maxError         % If values are bigger than maxError, replace it by fixed value.
-        yMax.meanChsCorr(ii)    = maxError;
-    else yMax.meanChsCorr(ii)   = max(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+    if max(corrArrayMean(iArray,:))> maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMax.meanPerArrayCorr(iArray)    = maxError;
+    else yMax.meanPerArrayCorr(iArray)   = max(corrArrayMean(iArray,:));
     end
-    if max(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1) + std(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1)) > maxError
-        yMax.errorChsCorr(ii)   = maxError;
-    else yMax.errorChsCorr(ii)  = max(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1) + std(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+    if max(corrArrayMean(iArray,:) + corrArrayStd(iArray,:)) > maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMax.errorPerArrayCorr(iArray)    = maxError;
+    else yMax.errorPerArrayCorr(iArray)   = max(corrArrayMean(iArray,:) + corrArrayStd(iArray,:));
     end
-    if max(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1)) > maxError       % If values are bigger than maxError, replace it by fixed value.
-        yMax.meanChsIncorr(ii)  = maxError;
-    else yMax.meanChsIncorr(ii) = max(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+
+    if max(incorrArrayMean(iArray,:))> maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMax.meanPerArrayIncorr(iArray)    = maxError;
+    else yMax.meanPerArrayIncorr(iArray)   = max(incorrArrayMean(iArray,:));
     end
-    if max(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1) + std(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1)) > maxError
-        yMax.errorChsIncorr(ii) = maxError;                     % If values are bigger than maxError, replace it by fixed value.
-    else yMax.errorChsIncorr(ii)= max(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1) + std(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+    if max(incorrArrayMean(iArray,:) + incorrArrayStd(iArray,:)) > maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMax.errorPerArrayIncorr(iArray)    = maxError;
+    else yMax.errorPerArrayIncorr(iArray)   = max(incorrArrayMean(iArray,:) + incorrArrayStd(iArray,:));
     end
-    yMax.maxChs             = max(max(yMax.errorChsCorr),max(yMax.errorChsIncorr));
+    yMax.maxPerArray = max(max(yMax.errorPerArrayCorr),max(yMax.errorPerArrayIncorr));
+    
     %min. vals.
-    if min(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1)) < -maxError        % If values are smaller than -maxError, replace it by fixed value.
-        yMin.meanChsCorr(ii)    = -maxError;
-    else yMin.meanChsCorr(ii)   = min(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+    if min(corrArrayMean(iArray,:)) < -maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMin.meanPerArrayCorr(iArray)    = -maxError;
+    else yMin.meanPerArrayCorr(iArray)   = min(corrArrayMean(iArray,:));
     end
-    if min(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1) - std(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1)) < -maxError
-        yMin.errorChsCorr(ii)   = -maxError;                    % If values are smaller than -maxError, replace it by fixed value.
-    else yMin.errorChsCorr(ii)  = min(mean(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1) - std(meanCorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+    if min(corrArrayMean(iArray,:) - corrArrayStd(iArray,:)) < -maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMin.errorPerArrayCorr(iArray)    = -maxError;
+    else yMin.errorPerArrayCorr(iArray)   = min(corrArrayMean(iArray,:) - corrArrayStd(iArray,:));
     end
-    if min(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1)) < -maxError      % If values are smaller than -maxError, replace it by fixed value.
-        yMin.meanChsIncorr(ii)  = -maxError;
-    else yMin.meanChsIncorr(ii) = min(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+
+    if min(incorrArrayMean(iArray,:)) < -maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMin.meanPerArrayIncorr(iArray)    = -maxError;
+    else yMin.meanPerArrayIncorr(iArray)   = min(incorrArrayMean(iArray,:));
     end
-    if min(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1) - std(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1)) < -maxError
-        yMin.errorChsIncorr(ii) = -maxError;                    % If values are smaller than -maxError, replace it by fixed value.
-    else yMin.errorChsIncorr(ii)= min(mean(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1) - std(meanIncorrEpoch(1 + 32*(ii-1):32*ii,:),1));
+    if min(incorrArrayMean(iArray,:) - incorrArrayStd(iArray,:)) < -maxError         % If values are bigger than maxError, replace it by fixed value.
+        yMin.errorPerArrayIncorr(iArray)    = -maxError;
+    else yMin.errorPerArrayIncorr(iArray)   = min(incorrArrayMean(iArray,:) - incorrArrayStd(iArray,:));
     end
-    yMin.minChs                 = min(min(yMin.errorChsCorr),min(yMin.errorChsIncorr));
+    yMin.minPerArray = min(min(yMin.errorPerArrayCorr),min(yMin.errorPerArrayIncorr));
 end
 
 %% Get Max. and Min. vals. for each targets (for plotTgtErrRPs)
@@ -251,173 +247,172 @@ corrMeanTgt = nan(nTgts,nChs,nDataPoints);                                      
 incorrMeanTgt = nan(nTgts,nChs,nDataPoints);
 disp('For plotTgtErrRPs...')
 
-for iTgt = 1:nTgts
-    % Getting Mean values for correct and incorrect epochs for target iTgt
-    if ndims(tgtErrRPs(iTgt).corrEpochs) == 3
-        corrMeanTgt(iTgt,:,:)   = squeeze(nanmean(tgtErrRPs(iTgt).corrEpochs,2));   % getting mean since more than 1 epoch
-    elseif ndims(tgtErrRPs(iTgt).corrEpochs) == 2                                   %#ok<ISMAT> % only 1 epoch, no mean
-        corrMeanTgt(iTgt,:,:)   = tgtErrRPs(iTgt).corrEpochs;
-    end
-    % Only mean values if more than 1 epoch
-    switch ErrorInfo.epochInfo.nIncorrEpochsTgt(iTgt)
-        case 0                                                                      % no epochs for this target location for incorrect trials
-        case 1                                                                      % only one epoch for this target location for incorrect trials
-            incorrMeanTgt(iTgt,:,:) = tgtErrRPs(iTgt).incorrEpochs;
-        otherwise                                                                   % getting mean vals for incorrect trials
-            incorrMeanTgt(iTgt,:,:) = squeeze(nanmean(tgtErrRPs(iTgt).incorrEpochs,2));
-    end
-    corrMean    = squeeze(corrMeanTgt(iTgt,:,:));                                   % mean values for this target
-    incorrMean  = squeeze(incorrMeanTgt(iTgt,:,:));
-    % Standard deviation per location
-    stdCorr     = squeeze(std(tgtErrRPs(iTgt).corrEpochs,0,2));                     % standard deviation for this target
-    stdIncorr   = squeeze(std(tgtErrRPs(iTgt).incorrEpochs,0,2));
-
-    for ii = 1:nArrays
-        %% Values per ch and array 
-        corrVals        = corrMean(1 + 32*(ii-1):32*ii,:);
-        stdCorrVals     = stdCorr(1 + 32*(ii-1):32*ii,:);
-        incorrVals      = incorrMean(1 + 32*(ii-1):32*ii,:);
-        stdIncorrVals   = stdIncorr(1 + 32*(ii-1):32*ii,:);
-        % Get max. vals. per target. See pre-allocating memory section at 
-        % the beginning of code 
-        if max(max(corrVals + stdCorrVals,[],2)) > maxError;                % If values are bigger than maxError, replace it by fixed value.
-            yMax.errorCorrTgt(iTgt,ii)      = maxError;
-        else yMax.errorCorrTgt(iTgt,ii)     = max(max(corrVals + stdCorrVals,[],2));
-        end
-        if max(max(incorrVals + stdIncorrVals,[],2)) > maxError             % If values are bigger than maxError, replace it by fixed value.
-            yMax.errorIncorrTgt(iTgt,ii)    = maxError;
-        else yMax.errorIncorrTgt(iTgt,ii)   = max(max(incorrVals + stdIncorrVals,[],2));
-        end
-        % Max. Y limit for plot of errorbars per ch/per array/per target
-        yMax.errorBothTgt(iTgt,ii) = max(yMax.errorCorrTgt(iTgt,ii),yMax.errorIncorrTgt(iTgt,ii));
-        % Get min. vals. per target
-        if min(min(corrVals - stdCorrVals,[],2)) < -maxError;               % If values are smaller than -maxError, replace it by fixed value.
-            yMin.errorCorrTgt(iTgt,ii)      = -maxError;
-        else yMin.errorCorrTgt(iTgt,ii)     = min(min(corrVals - stdCorrVals,[],2));
-        end
-        if min(min(incorrVals - stdIncorrVals,[],2)) < -maxError            % If values are smaller than -maxError, replace it by fixed value.
-            yMin.errorIncorrTgt(iTgt,ii)    = -maxError;
-        else yMin.errorIncorrTgt(iTgt,ii)   = min(min(incorrVals - stdIncorrVals,[],2));
-        end
-        % Min. Y limit for plot of errorbars per ch/per array/per target
-        yMin.errorBothTgt(iTgt,ii) = min(yMin.errorCorrTgt(iTgt,ii),yMin.errorIncorrTgt(iTgt,ii));
-       
-        %% Values for averaged-channels per array error-bar plot
-        % Getting max. values 
-        if max(mean(corrVals,1) + std(corrVals,1)) > maxError               % If values are bigger than maxError, replace it by fixed value.
-            yMax.errorCorrArrayTgt(iTgt,ii)     = maxError;
-        else yMax.errorCorrArrayTgt(iTgt,ii)    = max(nanmean(corrVals,1) + nanstd(corrVals,1));
-        end
-        if max(mean(incorrVals,1) + std(incorrVals,1)) > maxError           % If values are bigger than maxError, replace it by fixed value.
-           yMax.errorIncorrArrayTgt(iTgt,ii)    = maxError;
-        else yMax.errorIncorrArrayTgt(iTgt,ii)  = max(nanmean(incorrVals,1) + nanstd(incorrVals,1));
-        end
-        yMax.errorBothArrayTgt(iTgt,ii) = max(yMax.errorCorrArrayTgt(iTgt,ii),yMax.errorIncorrArrayTgt(iTgt,ii));
-        % Getting min. values for averaged-channels per array error-bar plot
-        if min(mean(corrVals,1) - std(corrVals,1)) < -maxError
-            yMin.errorCorrArrayTgt(iTgt,ii)     = -maxError;
-        else yMin.errorCorrArrayTgt(iTgt,ii)    = min(nanmean(corrVals,1) - nanstd(corrVals,1));
-        end
-        if min(mean(incorrVals,1) - std(incorrVals,1)) < -maxError
-            yMin.errorIncorrArrayTgt(iTgt,ii)   = -maxError;
-        else yMin.errorIncorrArrayTgt(iTgt,ii)  = min(nanmean(incorrVals,1) - nanstd(incorrVals,1));
-        end
-        yMin.errorBothArrayTgt(iTgt,ii) = min(yMin.errorCorrArrayTgt(iTgt,ii),yMin.errorIncorrArrayTgt(iTgt,ii));
-    
-        %% Limits to plot all targets in each channel and array (each target a different color)
-        %Max.
-        if max(max(corrVals)) > maxMean                                  
-            yMax.corrTgt(iTgt,ii)   = maxMean;                  % If values are bigger than maxMean, replace it by fixed value.
-        else yMax.corrTgt(iTgt,ii)  = max(max(corrVals));
-        end
-        if max(max(incorrVals)) > maxMean
-            yMax.incorrTgt(iTgt,ii) = maxMean;                  % If values are bigger than maxMean, replace it by fixed value.
-        else yMax.incorrTgt(iTgt,ii)= max(max(incorrVals));
-        end
-        yMax.bothTgt(iTgt,ii) = max(yMax.corrTgt(iTgt,ii),yMax.incorrTgt(iTgt,ii));
-        %Min.        
-        if min(min(corrVals)) < -maxMean
-            yMin.corrTgt(iTgt,ii)   = -maxMean;                 % If values are smaller than -maxMean, replace it by fixed value.
-        else yMin.corrTgt(iTgt,ii)  = min(min(corrVals));
-        end
-        if min(min(incorrVals)) < -maxMean
-            yMin.incorrTgt(iTgt,ii) = -maxMean;                 % If values are smaller than -maxMean, replace it by fixed value.
-        else yMin.incorrTgt(iTgt,ii)= min(min(incorrVals));
-        end
-        yMin.bothTgt(iTgt,ii) = min(yMin.corrTgt(iTgt,ii),yMin.incorrTgt(iTgt,ii));
-    end
-end
+%% For each target
+[corrMeanTgt,incorrMeanTgt,corrStdTgt,incorrStdTgt,corrMeanTgtArray,incorrMeanTgtArray,corrStdTgtArray,incorrStdTgtArray] = ...
+    getMeanTgtErrPs(tgtErrRPs,ErrorInfo);
 
 %% Distance-to-targets plots (for plotTgtDistanceEpochs)
-for iTgt = 1:nTgts                                                                  % For each target
-    for ii = 1:nArrays                                                              % For each array
-        fprintf('Target%i-Array%i\n',iTgt,ii)
+[incorrMeanDist2Tgt,incorrStdDist2Tgt,incorrMeanDist2TgtArray,incorrStdDist2TgtArray,ErrorInfo] = ...
+    getMeanDist2TgtErrPs(tgt2DistEpochs,ErrorInfo);
+
+for iTgt = 1:nTgts
+    % Getting Mean values for correct and incorrect epochs for target iTgt
+    corrMean    = squeeze(corrMeanTgt(iTgt,:,:));           % mean values for correct trials for this target
+    incorrMean  = squeeze(incorrMeanTgt(iTgt,:,:));
+    % Standard deviation per location
+    stdCorr     = squeeze(corrStdTgt(iTgt,:,:));        	% standard deviation/error for correct trials for this target
+    stdIncorr   = squeeze(incorrStdTgt(iTgt,:,:));          % standard deviation/error for incorrect trials for this target
+    
+    for iArray = 1:nArrays
+        %% Mean values per ch and array
+        corrVals        = corrMean(ErrorInfo.plotInfo.arrayChs(iArray,:),:);
+        stdCorrVals     = stdCorr(ErrorInfo.plotInfo.arrayChs(iArray,:),:);
+        incorrVals      = incorrMean(ErrorInfo.plotInfo.arrayChs(iArray,:),:);
+        stdIncorrVals   = stdIncorr(ErrorInfo.plotInfo.arrayChs(iArray,:),:);
+        
+        % Get max. vals. per target. See pre-allocating memory section at
+        % the beginning of code
+        if max(max(corrVals + stdCorrVals,[],2)) > maxError;                % If values are bigger than maxError, replace it by fixed value.
+            yMax.errorCorrTgt(iTgt,iArray)      = maxError;
+        else yMax.errorCorrTgt(iTgt,iArray)     = max(max(corrVals + stdCorrVals,[],2));
+        end
+        if max(max(incorrVals + stdIncorrVals,[],2)) > maxError             % If values are bigger than maxError, replace it by fixed value.
+            yMax.errorIncorrTgt(iTgt,iArray)    = maxError;
+        else yMax.errorIncorrTgt(iTgt,iArray)   = max(max(incorrVals + stdIncorrVals,[],2));
+        end
+        % Max. Y limit for plot of errorbars per ch/per array/per target
+        yMax.errorBothTgt(iTgt,iArray) = max(yMax.errorCorrTgt(iTgt,iArray),yMax.errorIncorrTgt(iTgt,iArray));
+        % Get min. vals. per target
+        if min(min(corrVals - stdCorrVals,[],2)) < -maxError;               % If values are smaller than -maxError, replace it by fixed value.
+            yMin.errorCorrTgt(iTgt,iArray)      = -maxError;
+        else yMin.errorCorrTgt(iTgt,iArray)     = min(min(corrVals - stdCorrVals,[],2));
+        end
+        if min(min(incorrVals - stdIncorrVals,[],2)) < -maxError            % If values are smaller than -maxError, replace it by fixed value.
+            yMin.errorIncorrTgt(iTgt,iArray)    = -maxError;
+        else yMin.errorIncorrTgt(iTgt,iArray)   = min(min(incorrVals - stdIncorrVals,[],2));
+        end
+        % Min. Y limit for plot of errorbars per ch/per array/per target
+        yMin.errorBothTgt(iTgt,iArray) = min(yMin.errorCorrTgt(iTgt,iArray),yMin.errorIncorrTgt(iTgt,iArray));
+        
+        %% Values for averaged channels and trials per array error-bar plot
+        % Getting max. values
+        if max(corrMeanTgtArray(iArray,iTgt,:) + corrStdTgtArray(iArray,iTgt,:)) > maxError               % If values are bigger than maxError, replace it by fixed value.
+            yMax.errorCorrArrayTgt(iTgt,iArray)     = maxError;
+        else yMax.errorCorrArrayTgt(iTgt,iArray)    = max(corrMeanTgtArray(iArray,iTgt,:) + corrStdTgtArray(iArray,iTgt,:));
+        end
+        if max(incorrMeanTgtArray(iArray,iTgt,:) + incorrStdTgtArray(iArray,iTgt,:)) > maxError           % If values are bigger than maxError, replace it by fixed value.
+            yMax.errorIncorrArrayTgt(iTgt,iArray)    = maxError;
+        else yMax.errorIncorrArrayTgt(iTgt,iArray)  = max(incorrMeanTgtArray(iArray,iTgt,:) + incorrStdTgtArray(iArray,iTgt,:));
+        end
+        yMax.errorBothArrayTgt(iTgt,iArray) = max(yMax.errorCorrArrayTgt(iTgt,iArray),yMax.errorIncorrArrayTgt(iTgt,iArray));
+        
+        % Getting min. values for averaged-channels per array error-bar plot
+        if min(corrMeanTgtArray(iArray,iTgt,:) - corrStdTgtArray(iArray,iTgt,:)) < -maxError
+            yMin.errorCorrArrayTgt(iTgt,iArray)     = -maxError;
+        else yMin.errorCorrArrayTgt(iTgt,iArray)    = min(corrMeanTgtArray(iArray,iTgt,:) - corrStdTgtArray(iArray,iTgt,:));
+        end
+        if min(incorrMeanTgtArray(iArray,iTgt,:) - incorrStdTgtArray(iArray,iTgt,:)) < -maxError
+            yMin.errorIncorrArrayTgt(iTgt,iArray)   = -maxError;
+        else yMin.errorIncorrArrayTgt(iTgt,iArray)  = min(incorrMeanTgtArray(iArray,iTgt,:) - incorrStdTgtArray(iArray,iTgt,:));
+        end
+        yMin.errorBothArrayTgt(iTgt,iArray) = min(yMin.errorCorrArrayTgt(iTgt,iArray),yMin.errorIncorrArrayTgt(iTgt,iArray));
+        
+        %% Limits to plot all targets in each channel and array (each target a different color)
+        %Max.
+        if max(max(corrVals)) > maxMean
+            yMax.corrTgt(iTgt,iArray)   = maxMean;                  % If values are bigger than maxMean, replace it by fixed value.
+        else yMax.corrTgt(iTgt,iArray)  = max(max(corrVals));
+        end
+        if max(max(incorrVals)) > maxMean
+            yMax.incorrTgt(iTgt,iArray) = maxMean;                  % If values are bigger than maxMean, replace it by fixed value.
+        else yMax.incorrTgt(iTgt,iArray)= max(max(incorrVals));
+        end
+        yMax.bothTgt(iTgt,iArray) = max(yMax.corrTgt(iTgt,iArray),yMax.incorrTgt(iTgt,iArray));
+        %Min.
+        if min(min(corrVals)) < -maxMean
+            yMin.corrTgt(iTgt,iArray)   = -maxMean;                 % If values are smaller than -maxMean, replace it by fixed value.
+        else yMin.corrTgt(iTgt,iArray)  = min(min(corrVals));
+        end
+        if min(min(incorrVals)) < -maxMean
+            yMin.incorrTgt(iTgt,iArray) = -maxMean;                 % If values are smaller than -maxMean, replace it by fixed value.
+        else yMin.incorrTgt(iTgt,iArray)= min(min(incorrVals));
+        end
+        yMin.bothTgt(iTgt,iArray) = min(yMin.corrTgt(iTgt,iArray),yMin.incorrTgt(iTgt,iArray));
+    end
+
+    %% Distance-to-targets plots (for plotTgtDistanceEpochs)
+
+    for iArray = 1:nArrays                                                       	% For each array
+        fprintf('Target%i-Array%i\n',iTgt,iArray)
         if ErrorInfo.epochInfo.nIncorrEpochsTgt(iTgt) ~= 0                          % Only when there are incorrect trials for target 'iTgt'
-            corrIndx        = (ErrorInfo.epochInfo.corrDcdTgt == iTgt);             % Indexes for correct trials
-            corrEpochTgt    = squeeze(nanmean(corrEpochs(1+32*(ii-1):ii*32,corrIndx,:),2));    % Correct trials
+            corrEpochTgt    = squeeze(corrMeanTgtArray(iArray,iTgt,:));    % Correct trials
             distVals        = tgt2DistEpochs(iTgt).dist2tgt;                        % List of distance of dcd target to true location
             
             % Max. and Min. vals for correct trials See pre-allocating memory
             % section at the beginning of code
             if max(max(corrEpochTgt)) > maxMean
-                yMax.chCorrTgt(iTgt,ii)     = maxMean;
-            else yMax.chCorrTgt(iTgt,ii)    = max(max(corrEpochTgt));
+                yMax.chCorrTgt(iTgt,iArray)     = maxMean;
+            else yMax.chCorrTgt(iTgt,iArray)    = max(max(corrEpochTgt));
             end
             if min(min(corrEpochTgt)) < -maxMean
-                yMin.chCorrTgt(iTgt,ii)     = -maxMean;
-            else yMin.chCorrTgt(iTgt,ii)    = min(min(corrEpochTgt));
+                yMin.chCorrTgt(iTgt,iArray)     = -maxMean;
+            else yMin.chCorrTgt(iTgt,iArray)    = min(min(corrEpochTgt));
             end
             if max(nanmean(corrEpochTgt,1)) > maxMean
-                yMax.meanCorrTgt(iTgt,ii)   = maxMean;
-            else yMax.meanCorrTgt(iTgt,ii)  = max(nanmean(corrEpochTgt));
+                yMax.meanCorrTgt(iTgt,iArray)   = maxMean;
+            else yMax.meanCorrTgt(iTgt,iArray)  = max(nanmean(corrEpochTgt));
             end
             if min(nanmean(corrEpochTgt,1)) < -maxMean
-                yMin.meanCorrTgt(iTgt,ii)   = -maxMean;
-            else yMin.meanCorrTgt(iTgt,ii)  = min(nanmean(corrEpochTgt));
+                yMin.meanCorrTgt(iTgt,iArray)   = -maxMean;
+            else yMin.meanCorrTgt(iTgt,iArray)  = min(nanmean(corrEpochTgt));
             end
             % Max. and Min. for incorrect trials. See pre-allocating memory
             % section at the beginning of code
+            
+            
             for iDist = 1:length(distVals)                                      % For each dist2tgt
-                iMeanDistTxt    = sprintf('meanEpochDist%i',distVals(iDist));   % name of error/incorrect epochs
-                arraysMeanIncorrEpoch = tgt2DistEpochs(iTgt).(iMeanDistTxt);    % for all arrays, incorrect epochs for this distance to target location
-                meanIncorrEpoch = arraysMeanIncorrEpoch(1+32*(ii-1):ii*32,:);   % for array 'ii', incorrect epochs for this dist2tgt
+                meanIncorrEpoch = squeeze(incorrMeanDist2Tgt(iDist,iTgt,:,:));        % mean trials per channel, for each array. 
+                stdIncorrEpoch = squeeze(incorrStdDist2Tgt(iDist,iTgt,:,:));
+                arraysMeanIncorrEpoch = squeeze(incorrMeanDist2TgtArray(iArray,iDist,iTgt,:));   % mean of channels and trials for each array 
+                arraysStdIncorrEpoch = squeeze(incorrStdDist2TgtArray(iArray,iDist,iTgt,:));   % mean of channels and trials for each array 
                 
                 %% Dist2tgt per ch per array
-                if max(max(meanIncorrEpoch)) > maxMean
-                    yMax.chDist2tgtLim(iTgt,ii,iDist)   = maxMean;
-                else yMax.chDist2tgtLim(iTgt,ii,iDist)  = max(max(meanIncorrEpoch));
+                if max(max(meanIncorrEpoch+stdIncorrEpoch)) > maxMean
+                    yMax.chDist2tgtLim(iTgt,iDist)   = maxMean;
+                else yMax.chDist2tgtLim(iTgt,iDist)  = max(max(meanIncorrEpoch+stdIncorrEpoch));
                 end
-                if min(min(meanIncorrEpoch)) < -maxMean
-                    yMin.chDist2tgtLim(iTgt,ii,iDist)   = -maxMean;
-                else yMin.chDist2tgtLim(iTgt,ii,iDist)  = min(min(meanIncorrEpoch));
+                if min(min(meanIncorrEpoch-stdIncorrEpoch)) < -maxMean
+                    yMin.chDist2tgtLim(iTgt,iDist)   = -maxMean;
+                else yMin.chDist2tgtLim(iTgt,iDist)  = min(min(meanIncorrEpoch-stdIncorrEpoch));
                 end
+                
                 %% Mean of dist2tgt per array
-                if max(nanmean(meanIncorrEpoch)) > maxMean
-                    yMax.meanDist2tgtLim(iTgt,ii)   = maxMean;
-                else yMax.meanDist2tgtLim(iTgt,ii)  = max(nanmean(meanIncorrEpoch));
+                if max(nanmean(arraysMeanIncorrEpoch + arraysStdIncorrEpoch)) > maxMean
+                    yMax.meanArrayDist2tgtLim(iTgt,iArray,iDist)   = maxMean;
+                else yMax.meanArrayDist2tgtLim(iTgt,iArray,iDist)  = max(nanmean(arraysMeanIncorrEpoch + arraysStdIncorrEpoch));
                 end
-                if min(nanmean(meanIncorrEpoch)) < -maxMean
-                    yMin.meanDist2tgtLim(iTgt,ii)   = -maxMean;
-                else yMin.meanDist2tgtLim(iTgt,ii)  = min(nanmean(meanIncorrEpoch));
+                if min(nanmean(arraysMeanIncorrEpoch - arraysStdIncorrEpoch)) < -maxMean
+                    yMin.meanArrayDist2tgtLim(iTgt,iArray,iDist)   = -maxMean;
+                else yMin.meanArrayDist2tgtLim(iTgt,iArray,iDist)  = min(nanmean(arraysMeanIncorrEpoch - arraysStdIncorrEpoch));
                 end
             end
         else
             fprintf('No trials for target %i...\n',iTgt)
         end
         % Max. and Min. for all chs per array (1st plot plotTgtDistanceEpochs)
-        yMax.bothChDist2tgt(iTgt,ii) = max(yMax.chCorrTgt(iTgt,ii),max(yMax.chDist2tgtLim(iTgt,ii,:)));
-        yMin.bothChDist2tgt(iTgt,ii) = min(yMin.chCorrTgt(iTgt,ii),min(yMin.chDist2tgtLim(iTgt,ii,:)));
+        yMax.bothChDist2tgt(iTgt,iArray) = max(yMax.chCorrTgt(iTgt,iArray),max(yMax.chDist2tgtLim(iTgt,iArray,:)));
+        yMin.bothChDist2tgt(iTgt,iArray) = min(yMin.chCorrTgt(iTgt,iArray),min(yMin.chDist2tgtLim(iTgt,iArray,:)));
     end
     % All arrays and dist2tgt (2nd plot)
-    yMax.bothMeanDist2tgt(iTgt) = max(nanmean(nanmean(yMax.meanCorrTgt)),max(max(yMax.meanDist2tgtLim)));
-    yMin.bothMeanDist2tgt(iTgt) = min(nanmean(nanmean(yMin.meanCorrTgt)),min(min(yMin.meanDist2tgtLim)));
+    yMax.bothMeanDist2tgt(iTgt) = max(nanmean(nanmean(yMax.errorCorrTgt(iTgt,:))),max(max(yMax.meanArrayDist2tgtLim(iTgt,:))));
+    yMin.bothMeanDist2tgt(iTgt) = min(nanmean(nanmean(yMin.errorCorrTgt(iTgt,:))),min(min(yMin.meanArrayDist2tgtLim(iTgt,:))));
 end
 
 %% Mean of dist2tgt per target location (6Tgts-polar plot)
-for ii = 1:nArrays
+for iArray = 1:nArrays
     % All dist2tgt per array (3rd plot)
-    yMax.bothArrayMeanDist2tgt(ii) = max(max(yMax.meanCorrTgt(:,ii)),max(yMax.meanDist2tgtLim(:,ii)));
-    yMin.bothArrayMeanDist2tgt(ii) = min(min(yMin.meanCorrTgt(:,ii)),min(yMin.meanDist2tgtLim(:,ii)));
+    yMax.bothArrayMeanDist2tgt(iArray) = max(max(yMax.errorCorrTgt(:,iArray)),max(yMax.meanDist2tgtLim(:,iArray)));
+    yMin.bothArrayMeanDist2tgt(iArray) = min(min(yMin.errorCorrTgt(:,iArray)),min(yMin.meanDist2tgtLim(:,iArray)));
 end
 
 % Saving values in structure
@@ -426,4 +421,4 @@ ErrorInfo.plotInfo.equalLim.yMin = yMin;
 
 % Time it took to run this code
 tElapsed = toc(tStart);
-fprintf('Time it took to get equal Y limits was %0.2f seconds\n',tElapsed);
+fprintf('Time to get equal Y limits was %0.2f seconds\n',tElapsed);

@@ -43,9 +43,17 @@ if ~(nargin < 13)
 end
     
 %% Load default parameters
-if iArray == 7, ErrorInfo.signalProcess.arrays     = {'PFC','FEF'};
+switch lower(ErrorInfo.session(1))
+    case 'c', arrays2Use = {'PFC','FEF'};              % name of the arrays or source of the data
+    case 'j', arrays2Use = {'SEF','PFC'};
+end
+
+if iArray == 7, ErrorInfo.signalProcess.arrays     = arrays2Use;
 else ErrorInfo.signalProcess.arrays    = {availArrays{:,arrayIndx(iArray,1):arrayIndx(iArray,2)}}; %#ok<CCAT1>
 end
+
+warning('Getting the array/arrays %s-%s',ErrorInfo.signalProcess.arrays{1},ErrorInfo.signalProcess.arrays{end})
+
 ErrorInfo.signalProcess.baselineDone   = 0;
 ErrorInfo.epochInfo.rmvBaseDone        = 0;
 ErrorInfo.epochInfo.rmvBaseline        = rmvBaseline(iBaseline);
@@ -87,5 +95,44 @@ end
 
 %% Display params for each
 disp(ErrorInfo)
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function getXvalsFilename
+%
+%
+%
+%
+%
+%
+%
+% Author    : Andres    : 
+%
+% andres    : 1.1       : init. 25 March 2014
+
+[sessionList,~] = chicoBCIsessions;
+nSessions = length(sessionList);
+iSession = nSessions - numTrainSessions;
+trainSessions = sessionList(iSession:iSession+numTrainSessions-1);
+oldDecoder = sprintf('pop%s-%s-%i',trainSessions{1},trainSessions{end},numTrainSessions);
+% Load oldDecoder
+saveSession = ErrorInfo.session;                % save session name to test
+ErrorInfo.session = oldDecoder;                 % name of xVals or trained decoder we will load
+ErrorInfo.decoder.saveDecoder = 0;              % saveDecoder flag to zero to load decoder
+
+% if ErrorInfo.decoder.unsupervisedDcd                                % if supervised learning
+    loadFilename = createFileForm(ErrorInfo.decoder,ErrorInfo,'popTrain');
+% else
+%     loadFilename = createFileForm(ErrorInfo.decoder,ErrorInfo,'decoder');
+% end
+loadDecoder = load(loadFilename);                                   % includes: newB, decoder, ErrorInfo
+fprintf('Loading decoder %s\n',loadFilename)
+
+%% Output variables 
+% loadDecoder
+% loadFilename
+% ErrorInfo
 
 end

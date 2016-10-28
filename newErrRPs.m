@@ -1,5 +1,5 @@
-function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(mainParams)
-% function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(mainParams);
+function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(ErrorInfo)
+% function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(ErrorInfo);
 %
 % Calculates epochs for ErrRPs and eye traces for correct and error trials. Parameters in
 % mainParams determine the frequency band and the length of the epochs (for ErrPs).
@@ -9,8 +9,8 @@ function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(mainParams)
 % a previous error.
 %
 % INPUT
-% mainParams:               Structure. Contains fields related to the
-%                           filtering and
+% ErrorInfo:               Structure. Contains fields related to filtering, 
+%                           params, epoch's, spikes' and decoding parameters.
 % OUTPUT
 % corrEpochs:               matrix. Correct epochs in the form [numChs numEpochs lengthEpoch].
 % incorrEpochs:             matrix. Incorrect epochs in the form [numChs numEpochs lengthEpoch].
@@ -50,12 +50,8 @@ function [corrEpochs,incorrEpochs,eyeTraces,ErrorInfo] = newErrRPs(mainParams)
 % andres    : 1.3   : Removed and unified params. 27 Feb 2014
 
 % Analysis variables
-blockType = mainParams.epochInfo.blockType;       % Zero. Usually three blocks, 1) training, 2) ordered targets, 3) random targets
-decodOnly = mainParams.epochInfo.decodOnly;       % True if selecting only trials from the block where decoding occurs
-
-%% Initial values and paths
-% Loading files
-ErrorInfo = mainParams;
+blockType = ErrorInfo.epochInfo.blockType;       % Zero. Usually three blocks, 1) training, 2) ordered targets, 3) random targets
+decodOnly = ErrorInfo.epochInfo.decodOnly;       % True if selecting only trials from the block where decoding occurs
 
 %% Defining paths
 % Path and header for saved files

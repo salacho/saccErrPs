@@ -15,274 +15,281 @@ function plotMeanErrRPs(corrEpochs,incorrEpochs,ErrorInfo)
 % Created 11 June 2013
 % Last modified 16 July 2013
 
- ErrorInfo.plotInfo.equalLim.yMax.maxChs = 30
- ErrorInfo.plotInfo.equalLim.yMin.minChs = -33
+%  ErrorInfo.plotInfo.equalLim.yMax.maxChs = 30
+%  ErrorInfo.plotInfo.equalLim.yMin.minChs = -33
+% 
 
 tStart = tic;
+
+%% Get infoStr (useful to name files, titles, axis, ...)
+infoStr = getInfoStr(ErrorInfo);
+
+ErrorInfo.plotInfo.colorErrP
+
 %% Params
-% Getting layout for array/channel distribution
-test.NNs = 0; test.lapla = 0;
-layoutInfo = layout(1,test);
+% Getting plot params
+plotInfo = ErrorInfo.plotInfo;
+nChs = ErrorInfo.epochInfo.nChs;
+arrayLoc = plotInfo.arrayLoc;
+
+% Get trials mean and std or standard error values 
+tempFlag = ErrorInfo.epochInfo.getMeanArrayEpoch;
+ErrorInfo.epochInfo.getMeanArrayEpoch = true;
+
+[corrMeanTrials,incorrMeanTrials,corrStdTrials,incorrStdTrials,corrArrayMean,incorrArrayMean,corrArrayStd,incorrArrayStd] = getMeanTrialsErrPs(corrEpochs,incorrEpochs,ErrorInfo);
+ErrorInfo.epochInfo.getMeanArrayEpoch = tempFlag;
 
 % Plotting params
-plotParams.nXtick = 6;
-plotParams.axisFontSize = 13; %(AFSG-20140304) 7;
-plotParams.axisFontWeight = 'Bold';
-plotParams.titleFontSize = 17; %(AFSG-20140304)12; 
-plotParams.titleFontWeight = 'Bold';
-plotParams.plotColors(1,:) = [0 0 1];
-plotParams.lineWidth = 4; %(AFSG-20140304) 1.5;
-plotParams.lineStyle = '-';
-% Colors 
-FigHand = figure; plotParams.Color = colormap; close(FigHand);
-plotParams.Color = plotParams.Color(1:length(plotParams.Color)/32:end,:);   % 32 different colors
+plotInfo.axisFontSz = 13; %(AFSG-20140304) 7;
+plotInfo.titleFontSz = 17; %(AFSG-20140304)12; 
+plotInfo.lineWidth = plotInfo.lineWidth - 1;
 
-XtickLabels = -ErrorInfo.epochInfo.preOutcomeTime:(ErrorInfo.epochInfo.postOutcomeTime + ErrorInfo.epochInfo.preOutcomeTime)/plotParams.nXtick:ErrorInfo.epochInfo.postOutcomeTime;
-XtickPos = (0:(ErrorInfo.epochInfo.epochLen-0)/plotParams.nXtick:ErrorInfo.epochInfo.epochLen);
-arrayLoc = ErrorInfo.plotInfo.arrayLoc;
+% Time vector 
+timeVector = linspace(-ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.epochLen)/1000;       % time in seconds            % x values for error bar lot
 
-% Mean values 
-if ndims(corrEpochs) == 3                           
-    corrMean = squeeze(mean(corrEpochs,2));
-elseif ndims(corrEpochs) == 2                               %#ok<ISMAT>
-    corrMean = corrEpochs;                                  % only one epoch, hence no mean
-else error('Number of dims for corrEpochs do not match')
-end
+%% Plot averaged epochs for each channels and array
+hPlot = nan(nChs,2);
 
-if ndims(incorrEpochs) == 3                           
-    incorrMean = squeeze(mean(incorrEpochs,2));
-elseif ndims(incorrEpochs) == 2                             %#ok<ISMAT>
-    incorrMean = incorrEpochs;                              % only one epoch, hence no mean
-else error('Number of dims for incorrEpochs do not match')
-end
+for iArray = 1:length(arrayLoc)
+    hFig = figure;
+    set(hFig,'PaperPositionMode','auto','Position',[1281 0 1280 948],...
+        'name',sprintf('%s mean for %s',ErrorInfo.session,arrayLoc{iArray}),...
+        'NumberTitle','off','Visible',plotInfo.visible);
 
-% Signals used to extract epochs plotted here
-switch ErrorInfo.epochInfo.typeRef
-    case 'lfp'
-        strgRef = '';
-    case 'lapla'
-        strgRef = 'lapla-';
-    case 'car'
-        strgRef = 'car';
-        stop
-end
-
-% Identifier used in saveFilename and in Figure name
-if ErrorInfo.plotInfo.equalLimits, yLimTxt = 'equalY'; else yLimTxt = ''; end
-
-% Plots mean traces for each array with same color, different color and with std
-xVals = (1:1:length(corrMean(1,:)));            % x values for error bar lot
-
-%% Plot only one channels per array
-
-hFigarray = figure;
-subplot(1,3,1)
-hold on 
-hPlotarray(1,1) = plot(detrend(corrMean(21,:)),'b','lineStyle',plotParams.lineStyle,'lineWidth',plotParams.lineWidth);
-hPlotarray(1,2) = plot(detrend(incorrMean(21,:)),'r','lineStyle',plotParams.lineStyle,'lineWidth',plotParams.lineWidth);
-set(gca,'FontSize',plotParams.axisFontSize+5,'Xtick',XtickPos,'XtickLabel',XtickLabels)
-axis tight
-legend(gca,'Correct','Error','Location','NorthWest')
-xlabel('Time to feedback onset [ms]','FontSize',plotParams.axisFontSize+5,'FontWeight',plotParams.axisFontWeight)
-ylabel('Amplitude [mV]','FontSize',plotParams.axisFontSize+5,'FontWeight',plotParams.axisFontWeight)
-title('LFP ch 21 PFC','FontSize',plotParams.titleFontSize+1,'FontWeight',plotParams.titleFontWeight)
-subplot(1,3,2)
-hold on 
-hPlotarray(2,1) = plot(detrend(corrMean(41,:)),'b','lineStyle',plotParams.lineStyle,'lineWidth',plotParams.lineWidth);
-hPlotarray(2,2) = plot(detrend(incorrMean(41,:)),'r','lineStyle',plotParams.lineStyle,'lineWidth',plotParams.lineWidth);
-set(gca,'FontSize',plotParams.axisFontSize+5,'Xtick',XtickPos,'XtickLabel',XtickLabels)
-axis tight
-legend(gca,'Correct','Error','Location','NorthWest')
-xlabel('Time to feedback onset [ms]','FontSize',plotParams.axisFontSize+5,'FontWeight',plotParams.axisFontWeight)
-ylabel('Amplitude [mV]','FontSize',plotParams.axisFontSize+5,'FontWeight',plotParams.axisFontWeight)
-title('LFP ch 41 SEF','FontSize',plotParams.titleFontSize+1,'FontWeight',plotParams.titleFontWeight)
-subplot(1,3,3)
-hold on 
-hPlotarray(3,1) = plot(detrend(corrMean(70,:)),'b','lineStyle',plotParams.lineStyle,'lineWidth',plotParams.lineWidth);
-hPlotarray(3,2) = plot(detrend(incorrMean(70,:)),'r','lineStyle',plotParams.lineStyle,'lineWidth',plotParams.lineWidth);
-set(gca,'FontSize',plotParams.axisFontSize+5,'Xtick',XtickPos,'XtickLabel',XtickLabels)
-axis tight
-legend(gca,'Correct','Error','Location','NorthWest')
-xlabel('Time to feedback onset [ms]','FontSize',plotParams.axisFontSize+5,'FontWeight',plotParams.axisFontWeight)
-ylabel('Amplitude [mV]','FontSize',plotParams.axisFontSize+5,'FontWeight',plotParams.axisFontWeight)
-title('LFP ch 70 FEF','FontSize',plotParams.titleFontSize+1,'FontWeight',plotParams.titleFontWeight)
-
-%% Plot averaged signals for each channels and array
-hFig = 1:length(arrayLoc);
-hPlot = nan(ErrorInfo.epochInfo.nChs,2);
-for ii = 1:length(arrayLoc)
-    hFig(ii) = figure;
-    set(hFig(ii),'PaperPositionMode','auto','Position',[1281 1 1280 948],...
-        'name',sprintf('%s Correct-Incorrect mean epochs chs for %s array %s',ErrorInfo.session,arrayLoc{ii},yLimTxt),...
-        'NumberTitle','off','Visible',ErrorInfo.plotInfo.visible);
-    for iCh = 1+(ii-1)*32:(ii)*32
+    for iCh = plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)
         subCh = mod(iCh - 1,32) + 1;                                        % channels from 1-32 per array
-        subplot(layoutInfo.rows,layoutInfo.colms,layoutInfo.subplot(subCh)) % subplot location using layout info
-        hPlot(ii,1) = plot(detrend(corrMean(iCh,:)),'b','lineWidth',plotParams.lineWidth);                   % plot Correct epochs
+        subplot(plotInfo.layout.rows,plotInfo.layout.colms,plotInfo.layout.subplot(subCh)) % subplot location using layout info
+        % Beware, detrend works on each column, need to transpose
+        hPlot(iCh,1) = plot(timeVector,(corrMeanTrials(iCh,:)'),'Color',plotInfo.colorErrP(1,:),'lineWidth',plotInfo.lineWidth);                   % plot Correct epochs
         hold on
-        hPlot(ii,2) = plot(detrend(incorrMean(iCh,:)),'r','lineWidth',plotParams.lineWidth);                 % plot incorrect epochs
+        hPlot(iCh,2) = plot(timeVector,(incorrMeanTrials(iCh,:)'),'Color',plotInfo.colorErrP(2,:),'lineWidth',plotInfo.lineWidth);                 % plot incorrect epochs
+        %hPlot(iCh,3) = plot(timeVector,(incorrMeanTrials(iCh,:)'-corrMeanTrials(iCh,:)'),'Color',plotInfo.colorErrP(3,:),'lineWidth',plotInfo.lineWidth);                 % plot incorrect epochs
+        
         axis tight
-        if ErrorInfo.plotInfo.equalLimits
-            set(gca,'FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels,...
-                'Ylim',[ErrorInfo.plotInfo.equalLim.yMin.bothMeanEpoch(ii) ErrorInfo.plotInfo.equalLim.yMax.bothMeanEpoch(ii)])
+        if plotInfo.equalLimits
+            set(gca,'FontSize',plotInfo.axisFontSz,...
+                'Ylim',[plotInfo.equalLim.yMin.bothMeanEpoch(iArray) plotInfo.equalLim.yMax.bothMeanEpoch(iArray)])
         else
-           set(gca,'FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels)
+           set(gca,'FontSize',plotInfo.axisFontSz)
         end
     end
     % legend
-    plotParams.errorColors = [0 0 1; 1 0 0];                                % Blue and red traces
-    subplot(layoutInfo.rows,layoutInfo.colms,1)                             % use subplot to place legend outside the graph
-    legPlots = nan(2,1);
-    for kk = 1:2, legPlots(kk) = plot(0,'Color',plotParams.errorColors(kk,:),'lineWidth',2); hold on, end;    % plot fake data to polace legends
-    legend(legPlots,{'Correct','Error'},0)
+    
+    subplot(plotInfo.layout.rows,plotInfo.layout.colms,1)                             % use subplot to place legend outside the graph
+    legPlots = nan(3,1);
+    for kk = 1:3, legPlots(kk) = plot(0,'Color',plotInfo.colorErrP(kk,:),'lineWidth',2); hold on, end;    % plot fake data to polace legends
+    legend(legPlots,{'Correct','Error',char(arrayLoc(iArray))},0)
     axis off                                                                % remove axis and background
     % Saving figures
-    if ErrorInfo.plotInfo.savePlot
-        saveFilename = sprintf('%s-corrIncorr-meanEpoch-%s-%s%s[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-            arrayLoc{ii},strgRef,yLimTxt,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-        saveas(hFig(ii),saveFilename)
+    if plotInfo.savePlot
+        saveFilename = sprintf('%s-corrIncorr-meanEpochChs-%s%s%s.png',infoStr.strPrefix,...
+            arrayLoc{iArray},infoStr.signProcStr,infoStr.strSuffix);
+        saveas(hFig,saveFilename)
     end
 end
 clear hFig hPlot legPlots
 
-%% Plot all array's channels in one
+%% Plot mean and error bars of epochs per channel, per array 
+plotInfo.lineWidth = plotInfo.lineWidth - 1;        % making lines smaller to see error bars
+for iArray = 1:length(arrayLoc)
+    hFig = figure;
+    set(hFig,'PaperPositionMode','auto','Position',[1281 0 1280 948],...
+        'name',sprintf('%s %s and mean for %s',ErrorInfo.session,infoStr.stdTxt,arrayLoc{iArray}),...
+        'NumberTitle','off','Visible',plotInfo.visible);
 
-plotParams.nXtick = 12;
-colorType = 1;
+    for iCh = plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)
+        subCh = mod(iCh - 1,32) + 1;                                        % channels from 1-32 per array
+        subplot(plotInfo.layout.rows,plotInfo.layout.colms,plotInfo.layout.subplot(subCh)) % subplot location using layout info
+        
+        plotInfo.plotColors(1,:) = plotInfo.colorErrP(1,:);
+        plotErrorBars(timeVector,(corrMeanTrials(iCh,:)),(corrMeanTrials(iCh,:) - corrStdTrials(iCh,:)), (corrMeanTrials(iCh,:) + corrStdTrials(iCh,:)),plotInfo);
+        
+        plotInfo.plotColors(1,:) = plotInfo.colorErrP(2,:);
+        plotErrorBars(timeVector,(incorrMeanTrials(iCh,:)),(incorrMeanTrials(iCh,:) - incorrStdTrials(iCh,:)), (incorrMeanTrials(iCh,:) + incorrStdTrials(iCh,:)),plotInfo);
+                                                 
+        plot(timeVector,incorrMeanTrials(iCh,:) - corrMeanTrials(iCh,:),'color',plotInfo.colorErrP(4,:),'linewidth',2);
+
+        axis tight
+        if plotInfo.equalLimits
+            set(gca,'FontSize',plotInfo.axisFontSz,...
+                'Ylim',[plotInfo.equalLim.yMin.errorBothMeanEpoch(iArray) plotInfo.equalLim.yMax.errorBothMeanEpoch(iArray)])
+        else
+           set(gca,'FontSize',plotInfo.axisFontSz)
+        end
+    end
+    % legend
+    
+    subplot(plotInfo.layout.rows,plotInfo.layout.colms,1)                             % use subplot to place legend outside the graph
+    legPlots = nan(3,1);
+    for kk = 1:2, legPlots(kk) = plot(0,'Color',plotInfo.colorErrP(kk,:),'lineWidth',2); hold on, end;    % plot fake data to polace legends
+    legPlots(3) = plot(0,'Color',plotInfo.colorErrP(4,:),'lineWidth',2); legPlots(4) = plot(0,'Color',plotInfo.colorErrP(3,:),'lineWidth',2);
+    hLeg = legend(legPlots,{'Correct','Incorrect','Incorr-Corr',char(arrayLoc(iArray))},0,'fontsize',10);
+    set(hLeg,'box','off')
+    
+    axis off                                                                % remove axis and background
+    % Saving figures
+    if plotInfo.savePlot
+        saveFilename = sprintf('%s-corrIncorr-meanErrorBarEpochChs-%s%s%s.png',infoStr.strPrefix,...
+            arrayLoc{iArray},infoStr.signProcStr,infoStr.strSuffix);
+        saveas(hFig,saveFilename)
+    end
+end
+clear hFig hPlot legPlots
+plotInfo.lineWidth = plotInfo.lineWidth + 1;        % making lines bigger again. Returning to defualt
+
+%% Plot meanTrials values for all channels (each channel a different color) of arrays in one plot
 % Figure name
 titleTxt = 'allChsColor';
-hFig(colorType) = figure;
-set(hFig(colorType),'PaperPositionMode','auto','Position',[886 57 1664 860],...
+hFig = figure;
+set(hFig,'PaperPositionMode','auto','Position',[886 57 1664 860],...
     'name',sprintf('%s Correct-Incorrect mean epochs array/channels %s',ErrorInfo.session,titleTxt),...
     'NumberTitle','off','visible',ErrorInfo.plotInfo.visible);
 
 % Plot for each array
-for ii = 1:3
-    for iCh = 1+(ii-1)*32:(ii)*32
+for iArray = 1:plotInfo.nArrays
+    for iCh = 1+(iArray-1)*32:(iArray)*32
         % Get trace color vals
-        chColor     = mod(iCh-1,size(plotParams.Color,1))+1;       % Trace color from colormap
-        colorVal1   = plotParams.Color(chColor,:);
+        subCh       = mod(iCh-1,size(plotInfo.colorMap,1))+1;
+        colorVal1   = plotInfo.colorMap(subCh,:);
         colorVal2   = colorVal1;
         % Plot
-        subCh       = mod(iCh-1,size(plotParams.Color,1))+1;
-        subplot(2,3,1+(ii-1)), hold on,
-        hPlot(subCh)= plot(detrend(corrMean(iCh,:)),'Color',colorVal1);
+        subplot(2,3,1+(iArray-1)), hold on,
+        hPlot(subCh)= plot(timeVector,detrend(corrMeanTrials(iCh,:)),'Color',colorVal1);
         % legend
         %legendTxt{iCh} = sprintf('Ch%i',iCh); 
         % title
-        title(['Correct Mean for channels of array ',arrayLoc{ii}],'FontSize',plotParams.titleFontSize,'FontWeight',plotParams.titleFontWeight)
-        subplot(2,3,4+(ii-1)), hold on
-        plot(detrend(incorrMean(iCh,:)),'Color',colorVal2)
+        title(['Correct Mean for channels of array ',arrayLoc{iArray}],'FontSize',plotInfo.titleFontSz,'FontWeight',plotInfo.titleFontWeight)
+        subplot(2,3,4+(iArray-1)), hold on
+        plot(timeVector,detrend(incorrMeanTrials(iCh,:)),'Color',colorVal2)
         % Title
-        title(['Incorrect Mean for channels of array ',arrayLoc{ii}],'FontSize',plotParams.titleFontSize,'FontWeight',plotParams.titleFontWeight)
+        title(['Incorrect Mean for channels of array ',arrayLoc{iArray}],'FontSize',plotInfo.titleFontSz,'FontWeight',plotInfo.titleFontWeight)
     end
     % First row plot properties
-	set(gca,'FontSize',plotParams.axisFontSize+2,'Xtick',XtickPos,'XtickLabel',XtickLabels)
-    xlabel('Time from reward stimulus onset [ms]','FontSize',plotParams.axisFontSize+4,'FontWeight',plotParams.axisFontWeight)
-    ylabel('Signal voltage [uV]','FontSize',plotParams.axisFontSize+4,'FontWeight',plotParams.axisFontWeight)
+	set(gca,'FontSize',plotInfo.axisFontSz+2)
+    xlabel('Time from reward stimulus onset [s]','FontSize',plotInfo.axisFontSz+4,'FontWeight',plotInfo.axisFontWeight)
+    ylabel('Signal voltage [uV]','FontSize',plotInfo.axisFontSz+4,'FontWeight',plotInfo.axisFontWeight)
     axis tight;
     % Second row plot properties
-    subplot(2,3,1+(ii-1)), axis tight
-    set(gca,'FontSize',plotParams.axisFontSize+2,'Xtick',XtickPos,'XtickLabel',XtickLabels)
-    xlabel('Time from punishment stimulus onset [ms]','FontSize',plotParams.axisFontSize+4,'FontWeight',plotParams.axisFontWeight)
-    ylabel('Signal voltage [uV]','FontSize',plotParams.axisFontSize+4,'FontWeight',plotParams.axisFontWeight)
+    subplot(2,3,1+(iArray-1)), axis tight
+    set(gca,'FontSize',plotInfo.axisFontSz+2)
+    xlabel('Time from punishment stimulus onset [s]','FontSize',plotInfo.axisFontSz+4,'FontWeight',plotInfo.axisFontWeight)
+    ylabel('Signal voltage [uV]','FontSize',plotInfo.axisFontSz+4,'FontWeight',plotInfo.axisFontWeight)
 end
 
 % Saving figures
-if ErrorInfo.plotInfo.savePlot
-    saveFilename = sprintf('%s-corrIncorr-epochsMean-%s-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-        titleTxt,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-    saveas(hFig(colorType),saveFilename)
-end
-clear hFig hPlot
-
-%% Overlay of both correct and incorrect epochs
-hFig = figure;
-set(hFig,'PaperPositionMode','auto','Position',[282 210 2159 523],...
-    'name',sprintf('%s Correct-Incorrect chs mean and std for all arrays. %s',ErrorInfo.session,yLimTxt),...
-    'NumberTitle','off','visible',ErrorInfo.plotInfo.visible);
-
-% Plot together mean and std for correct and incorrect for each array
-for ii = 1:3
-    % Get mean and std values
-    meanChCorr      = nanmean(corrMean(1+(ii-1)*32:(ii)*32,:),1);
-    stdChCorr       = nanstd(corrMean(1+(ii-1)*32:(ii)*32,:),1);
-    meanChIncorr    = nanmean(incorrMean(1+(ii-1)*32:(ii)*32,:),1);
-    stdChIncorr     = nanstd(incorrMean(1+(ii-1)*32:(ii)*32,:),1);
-    
-    % Plot error bars
-    subplot(1,3,ii), hold on,
-    %plotParams.plotColors(1,:) = [0 0 1];
-    plotParams.plotColors(1,:) = [26 150 65]/255;
-    
-    [plotErrCorr]   = plotErrorBars(xVals,meanChCorr,meanChCorr-stdChCorr,meanChCorr+stdChCorr,plotParams);               % Blue for correct epochs
-    title(['Correct and Incorrect Mean/STD for ',arrayLoc{ii}],'FontSize',plotParams.titleFontSize,'FontWeight',plotParams.titleFontWeight)
-    %plotParams.plotColors(1,:) = [1 0 0];
-    plotParams.plotColors(1,:) = [215 25 28]/255;
-    [plotErrIncorr] = plotErrorBars(xVals,meanChIncorr,meanChIncorr-stdChIncorr,meanChIncorr+stdChIncorr,plotParams);     % Red for correct epochs
-    
-    % Plot properties
-    xlabel('Time from reward/punishment stimulus onset [ms]','FontSize',plotParams.axisFontSize+4,'FontWeight','Bold')
-    ylabel('Signal voltage [uV]','FontSize',plotParams.axisFontSize+4,'FontWeight','Bold')
-    axis tight;
-    if ErrorInfo.plotInfo.equalLimits
-        set(gca,'FontSize',plotParams.axisFontSize+2,'Xtick',XtickPos,'XtickLabel',XtickLabels,...
-            'Ylim',[ErrorInfo.plotInfo.equalLim.yMin.minChs ErrorInfo.plotInfo.equalLim.yMax.maxChs])        
-    else
-        set(gca,'FontSize',plotParams.axisFontSize+2,'Xtick',XtickPos,'XtickLabel',XtickLabels)
-    end
-    legend([plotErrCorr.H plotErrIncorr.H],{'Correct','Error'},'location','SouthWest','FontWeight','Bold')
-end
-
-% Saving figures
-if ErrorInfo.plotInfo.savePlot
-    saveFilename = sprintf('%s-corrIncorr-chsErrorBars-%s[%i-%ims]-[%0.1f-%iHz]-iSLC2014.png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),yLimTxt,...
-        ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+if plotInfo.savePlot
+    saveFilename = sprintf('%s-corrIncorr-overlayMeanChsPerArray-%s%s%s.png',infoStr.strPrefix,...
+        titleTxt,infoStr.signProcStr,infoStr.strSuffix);
     saveas(hFig,saveFilename)
 end
 clear hFig hPlot
 
-%% Error Difference
-meanCorrBaseline = squeeze(nanmean(corrBaseline,2)); 
-meanIncorrBaseline = squeeze(nanmean(incorrBaseline,2));
-diffCorrError = corrMean - incorrMean;
+%% Overlay of both correct and incorrect mean and st.dev./error for all trials and channels per array.
+hFig = figure;
+set(hFig,'PaperPositionMode','auto','Position',[282 210 2159 523],...
+    'name',sprintf('%s Correct-Incorrect mean and std epoch per array. %s',ErrorInfo.session,infoStr.yLimTxt),...
+    'NumberTitle','off','visible',plotInfo.visible);
 
-hFig = 1:length(arrayLoc);
-hPlot = nan(ErrorInfo.epochInfo.nChs,1);
-for ii = 1:length(arrayLoc)
-    hFig(ii) = figure;
-    set(hFig(ii),'PaperPositionMode','auto','Position',[1281 1 1280 948],...
-        'name',sprintf('%s Correct-Incorrect epochs mean diff. chs for %s array %s',ErrorInfo.session,arrayLoc{ii},yLimTxt),...
-        'NumberTitle','off','Visible',ErrorInfo.plotInfo.visible);
-    for iCh = 1+(ii-1)*32:(ii)*32
-        subCh = mod(iCh - 1,32) + 1;                                        % channels from 1-32 per array
-        subplot(layoutInfo.rows,layoutInfo.colms,layoutInfo.subplot(subCh)) % subplot location using layout info
-        hPlot(ii,1) = plot(detrend(diffCorrError(iCh,:)),'b','lineWidth',plotParams.lineWidth);                   % plot Correct epochs
-        %hPlot(ii,1) = plot((corrMean(iCh,:)),'b','lineWidth',plotParams.lineWidth);                   % plot Correct epochs
-        hold on
-        axis tight
-        if ErrorInfo.plotInfo.equalLimits
-            set(gca,'FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels,...
-                'Ylim',[ErrorInfo.plotInfo.equalLim.yMin.bothMeanEpoch(ii) ErrorInfo.plotInfo.equalLim.yMax.bothMeanEpoch(ii)])
-        else
-           set(gca,'FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels)
+plotInfo.lineWidth = 3;
+only1stCol = 0;
+
+% Per array plot together mean and std for correct and incorrect
+for iArray = 1:plotInfo.nArrays
+    % Plot error bars
+    subplot(1,3,iArray), hold on,
+    
+    % Zero line
+    % Plot err-diff
+    plotErrDiff = plot(timeVector,incorrArrayMean(iArray,:) - corrArrayMean(iArray,:),'linewidth',plotInfo.lineWidth,'color','k');
+    plot([0 0],[-90 90],'--k','linewidth',plotInfo.lineWidth)
+
+    plotInfo.plotColors(1,:) = plotInfo.colorErrP(1,:);
+    [plotErrCorr]   = plotErrorBars(timeVector,corrArrayMean(iArray,:),corrArrayMean(iArray,:)-corrArrayStd(iArray,:),corrArrayMean(iArray,:)+corrArrayStd(iArray,:),plotInfo);               % Blue for correct epochs
+    plotInfo.plotColors(1,:) = plotInfo.colorErrP(2,:);
+    [plotErrIncorr] = plotErrorBars(timeVector,incorrArrayMean(iArray,:),incorrArrayMean(iArray,:)-incorrArrayStd(iArray,:),incorrArrayMean(iArray,:)+incorrArrayStd(iArray,:),plotInfo);     % Red for correct epochs
+    
+    % Plot properties
+    title(sprintf('Chs Mean/%s for %s',infoStr.stdTxt,arrayLoc{iArray}),'FontSize',plotInfo.titleFontSz,'FontWeight',plotInfo.titleFontWeight)
+    if only1stCol
+        if iArray == 1
+            ylabel('Signal voltage [uV]','FontSize',plotInfo.axisFontSz+4,'FontWeight','Bold')
         end
+    else
+        ylabel('Signal voltage [uV]','FontSize',plotInfo.axisFontSz+4,'FontWeight','Bold')
     end
-    % legend
-    plotParams.errorColors = [0 0 1; 1 0 0];                                % Blue and red traces
-    subplot(layoutInfo.rows,layoutInfo.colms,1)                             % use subplot to place legend outside the graph
-    legPlots = plot(0,'Color',plotParams.errorColors(1,:),'lineWidth',1);   % plot fake data to polace legends
-    legend(legPlots,{'Correct-Error Diff.'},0)%,'FontSize',8)
-    axis off                                                                % remove axis and background
-    % Saving figures
-    if ErrorInfo.plotInfo.savePlot
-        saveFilename = sprintf('%s-corrIncorr-meanEpoch-%s-%s%s[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-            arrayLoc{ii},strgRef,yLimTxt,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-        saveas(hFig(ii),saveFilename)
+    xlabel('Time from feedback stimulus onset [s]','FontSize',plotInfo.axisFontSz+4,'FontWeight','Bold')
+    
+    axis tight;
+    if ErrorInfo.plotInfo.equalLimits
+        set(gca,'FontSize',plotInfo.axisFontSz+2,...
+            'Ylim',[plotInfo.equalLim.yMin.minPerArray-5 plotInfo.equalLim.yMax.maxPerArray+5])        
+    else
+        set(gca,'FontSize',plotInfo.axisFontSz+2)
     end
+    hLeg(iArray,:) = legend([plotErrCorr.H plotErrIncorr.H plotErrDiff],{'Correct','Incorrect','Incorr-Corr'},'location','SouthWest','FontWeight','Bold');
 end
-clear hFig hPlot legPlots
+set(hLeg,'box','off')
 
+% Saving figures
+if plotInfo.savePlot
+    saveFilename = sprintf('%s-corrIncorr-meanErrorEpochPerArray%s%s.png',infoStr.strPrefix,...
+        infoStr.signProcStr,infoStr.strSuffix);
+    saveas(hFig,saveFilename)
+end
+clear hFig hPlot
+
+%% Overlay of both correct and incorrect mean and st.dev./error for one channel representative of each array
+chList = [12,44,85];
+warning('Add chList %i to plot to the ErrorInfo structure \n',chList)
+hFig = figure;
+set(hFig,'PaperPositionMode','auto','Position',[282 210 2159 523],...
+    'name',sprintf('%s Correct-Incorrect mean and std epoch per array. %s',ErrorInfo.session,infoStr.yLimTxt),...
+    'NumberTitle','off','visible',plotInfo.visible);
+
+% Per array plot together mean and std for correct and incorrect
+for iArray = 1:plotInfo.nArrays
+    % Plot error bars
+    subplot(1,3,iArray), hold on,
+    
+    % Zero line
+    % Plot err-diff
+    plotErrDiff = plot(timeVector,incorrMeanTrials(chList(iArray),:) - corrMeanTrials(chList(iArray),:),'linewidth',plotInfo.lineWidth,'color','k');
+    plot([0 0],[-110 110],'--k','linewidth',plotInfo.lineWidth)
+
+    plotInfo.plotColors(1,:) = plotInfo.colorErrP(1,:);
+    [plotErrCorr]   = plotErrorBars(timeVector,corrMeanTrials(chList(iArray),:),corrMeanTrials(chList(iArray),:) - corrStdTrials(chList(iArray),:),...
+        corrMeanTrials(chList(iArray),:) + corrStdTrials(chList(iArray),:),plotInfo);               % green for correct epochs
+    
+    plotInfo.plotColors(1,:) = plotInfo.colorErrP(2,:);
+    
+    [plotErrIncorr] = plotErrorBars(timeVector,incorrMeanTrials(chList(iArray),:),incorrMeanTrials(chList(iArray),:) - incorrStdTrials(chList(iArray),:),...
+        incorrMeanTrials(chList(iArray),:) + incorrStdTrials(chList(iArray),:),plotInfo);               % Red for correct epochs
+    
+    % Plot properties
+    title(sprintf('Correct and Incorrect Mean/%s for %s %i',infoStr.stdTxt,arrayLoc{iArray},chList(iArray)),'FontSize',plotInfo.titleFontSz-2,'FontWeight',plotInfo.titleFontWeight)
+    xlabel('Time from feedback onset [s]','FontSize',plotInfo.axisFontSz+2,'FontWeight','Bold')
+    ylabel('Signal voltage [uV]','FontSize',plotInfo.axisFontSz+2,'FontWeight','Bold')
+    axis tight;
+%     if ErrorInfo.plotInfo.equalLimits
+%         set(gca,'FontSize',plotInfo.axisFontSz+2,...
+%             'Ylim',[plotInfo.equalLim.yMin.minPerArray-5 plotInfo.equalLim.yMax.maxPerArray+5])        
+%     else
+        set(gca,'FontSize',plotInfo.axisFontSz)
+%     end
+    legend([plotErrCorr.H plotErrIncorr.H plotErrDiff],{'Correct','Error','Error-Correct'},'location','SouthWest','FontWeight','Bold')
+end
+
+% Saving figures
+if plotInfo.savePlot
+    saveFilename = sprintf('%s-corrIncorr-meanErrorEpochPerArray%s%s.png',infoStr.strPrefix,...
+        infoStr.signProcStr,infoStr.strSuffix);
+    saveas(hFig,saveFilename)
+end
+clear hFig hPlot
+
+% 
 % Time it took to run this code
 tElapsed = toc(tStart);
 fprintf('Time it took to get equal Y limits was %0.2f seconds\n',tElapsed);
+
+end

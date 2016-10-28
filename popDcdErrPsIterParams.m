@@ -1,9 +1,12 @@
-function popDcdErrPsIterParams
+function popDcdErrPsIterParams(subjName)
 % function popDcdErrPsIterParams
 %
 % Calculates decoder perfromance for different sessions and parameters.
 % Values are changed manually in the lines below. 
 %
+% INPUT 
+% subjName:           string. Name of the subject in lower case. Either
+%                     'jonah' or 'chico'.
 % OUTPUT
 % ErrorInfos:         cell [numSessions x 1]. with all the ErrorInfo structures for all the
 %                     sessions analyzed
@@ -33,29 +36,36 @@ function popDcdErrPsIterParams
 %
 % andres    : 1.1   : initial. 07 March 2014
 % andres    : 1.2   : session epochs only need to be loaded once (faster processing)
-% Andres    : v2.0  : changed code to fit BCI challeng @ NER 2015 format. 
+% andres    : 1.3   : updated Jonah compatibility 
 
-%% Turning ON all warnings! For some reason it was disable!
-% warning('on','all'); warning('query','all');
+% Paths
+dirs = initErrDirs;               % Paths where all data is loaded from and where chronic Recordings analysis are saved
+userEmail = 'salacho1@gmail.com';
 
 %% Params iterated (that will change)
-arrayIndx       = [1,1;2,2;1,2;1,3];        % (AFSG-20140313) was arrayIndx = [1,1;2,2;3,3;1,2;1,3;2,3;4,4];
-availArrays     = {'PFC','SEF','FEF'};              % name of the arrays or source of the data
+switch subjName
+    case 'chico', [sessionList,~] = chicoBCIsessions(0,1);  availArrays = {'PFC','SEF','FEF'};              % name of the arrays or source of the data
+    case 'jonah', sessionList = jonahBCIsessions;           availArrays = {'SEF','FEF','PFC'}; 
+end
+
+%arrayIndx      = [1,1;2,2;1,2;1,3];        % (AFSG-20140313) was 
+arrayIndx       = [1,1;2,2;3,3;1,2;1,3;2,3;4,4];
 rmvBaseline     = [true, false];
 predFunction    = {'mean','mean2','minMax'};        % prediction functions
 predSelectType  = {'none','anova'};
 dataTransf      = {'none','log','sqr','sqrt','mean','zscore'};
+nSessions       = length(sessionList);
 
 %% All sessions
-[sessionList,~] = chicoBCIsessions;
+% [sessionList,~] = chicoBCIsessions;
 
 %% Initializing vbles
-meanCorrDcd     = nan(nSessions,length(iterParams.arrayIndx),length(iterParams.rmvBaseline),length(iterParams.predFunction),length(iterParams.predSelectType),length(iterParams.dataTransf));
-meanErrorDcd    = nan(nSessions,length(iterParams.arrayIndx),length(iterParams.rmvBaseline),length(iterParams.predFunction),length(iterParams.predSelectType),length(iterParams.dataTransf));
-meanOverallDcd  = nan(nSessions,length(iterParams.arrayIndx),length(iterParams.rmvBaseline),length(iterParams.predFunction),length(iterParams.predSelectType),length(iterParams.dataTransf));
+meanCorrDcd     = nan(nSessions,length(arrayIndx),length(rmvBaseline),length(predFunction),length(predSelectType),length(dataTransf));
+meanErrorDcd    = nan(nSessions,length(arrayIndx),length(rmvBaseline),length(predFunction),length(predSelectType),length(dataTransf));
+meanOverallDcd  = nan(nSessions,length(arrayIndx),length(rmvBaseline),length(predFunction),length(predSelectType),length(dataTransf));
 
 %% Iterating sessions...
-for iSession = 1:length(sessionList)
+for iSession = 7:length(sessionList)
     tStart = tic;
     session = sessionList{iSession};
     % Setup initial params
@@ -123,6 +133,7 @@ iterParams.predSelectType = predSelectType;
 iterParams.dataTransf   = dataTransf;           %#ok<*STRNU>
 
 % Session for the population 
+decoder = ErrorInfo.decoder;
 if ErrorInfo.decoder.loadDecoder            % Add loaded decoder
     ErrorInfo.session = sprintf('pop%s-%s-%i-%s',sessionList{1},sessionList{end},length(sessionList),ErrorInfo.decoder.oldSession);
 else

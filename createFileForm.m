@@ -14,11 +14,19 @@ function [fileName] = createFileForm(decoder,ErrorInfo,fileType)
 % andres    : 1.3   : updated fields to include decoders trained with data from several sessions. 20 Mars 2014 
 
 %% Global Params 
+% Get suffix string ([msStart - msEnd]-filterType&Order-[hzStart - hzEnd])
+infoStr = getInfoStr(ErrorInfo);
+
 % Type of data loaded
 switch ErrorInfo.epochInfo.typeRef
     case 'lfp',         strgRef = '';
-    case 'lapla',       strgRef = 'lapla_'; warning('Is this _ really necessary?')
+    case 'lapla',       strgRef = 'lapla_';
     case 'car',         strgRef = 'car';
+end
+
+% Noisy channels removed
+if ErrorInfo.epochInfo.rmvNoisyErrPDone, noisyEpochStr = '-rmvNoisTrials';
+else noisyEpochStr = '';
 end
 
 %% Decoder used
@@ -33,9 +41,10 @@ end
 Arrays = '';
 if ~isempty(ErrorInfo.signalProcess.arrays)
     for ii = 1:length(ErrorInfo.signalProcess.arrays)                   % (AFSG-20140312) was: for ii = 1:length(decoder.arrays)
-        Arrays = [Arrays,'-',ErrorInfo.signalProcess.arrays{ii}];       % (AFSG-20140312) was: Arrays = [Arrays,'-',decoder.arrays{ii}];
+        Arrays = [Arrays,'-',ErrorInfo.signalProcess.arrays{ii}];       %#ok<AGROW> % (AFSG-20140312) was: Arrays = [Arrays,'-',decoder.arrays{ii}];
     end
-else Arrays = ''; end
+else Arrays = ''; 
+end
 
 %% Signal processing
 % Baseline removed
@@ -225,4 +234,22 @@ switch fileType
             ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound,...
             Base,featFun,featSel,datTrans,Arrays,predWindString); 
         end
+       
+    case 'popEpochs'
+        %% Session
+        fileRoot = fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session);
+        fileName = sprintf('%s-corrIncorr-%s%s.mat',fileRoot,...
+            noisyEpochStr,infoStr.strSuffix); 
+    case 'popErrPs'
+%         %% Session
+%         fileRoot = fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session);
+%         fileName = sprintf('%s-tgtErr&Dist2Tgt-%s%s[%i-%ims]-[%0.1f-%iHz].mat',fileRoot,...
+%             strgRef,noisyEpochStr,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,...
+%             ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound); 
+    case 'popDist2Tgt'
+        %% Session
+        fileRoot = fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session);
+        fileName = sprintf('%s-dist2Tgt-%s%s%s.mat',fileRoot,...
+            strgRef,noisyEpochStr,infoStr.strSuffix); 
+        
 end

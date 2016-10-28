@@ -56,7 +56,7 @@ function [corrEpochs,incorrEpochs,ErrorInfo] = getErrRPs(OutcomeInfo,ErrorInfo)
 %         rwdStimOn:        vector. Time reward stimulus (secondary) onset
 %         punChc:           vector. Time punishment stimulus onset
 %         BCtrial:          logical, 1 for brain/decoder-controlled trials
-%         nTrials:          Number of trials for this outcome (error) 
+%         nTrials:          Number of trials for this outcome (error)
 % ErrorInfo:                ErrRps info structure. Has all the fields
 %                           related to the analysis of ErrRPs.
 %         session:          string. Usually in the form 'CS20120925'
@@ -92,7 +92,10 @@ disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
 fprintf('Starting ErrRPs analysis for %s\n',ErrorInfo.session)
 disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
 
-% type of data to load
+% Strings/names for loading and saving...
+infoStr = getInfoStr(ErrorInfo);
+
+%type of data to load
 switch ErrorInfo.epochInfo.typeRef
     case 'lfp'
         strgRef = '';
@@ -108,18 +111,32 @@ nOuts = length(outcomes);
     
 % Since no Fs info for laplacian, need to figure it out by ourselves
 if strcmp(ErrorInfo.epochInfo.typeRef,'lfp') || strcmp(ErrorInfo.epochInfo.typeRef,'lapla')
-    getFsName = sprintf('%s-lfp%03d.mat',fullfile(ErrorInfo.dirs.DataIn,ErrorInfo.session,ErrorInfo.session),1);
+    getFsName = sprintf('%s-lfp%03d.mat',fullfile(ErrorInfo.dirs.DataIn,ErrorInfo.session,ErrorInfo.session),2);
     FsFile = load(getFsName);
     Fs = FsFile.ChInfo.Fs;
 else
     disp('Add other criteria to extract the sampling frequency!')
 end
 
-% Initializing vbles for epochs and baseline
-corrEpochs   = nan(ErrorInfo.epochInfo.nChs,OutcomeInfo.noutcms(1),ErrorInfo.epochInfo.preOutcomeTime/1000*Fs + ErrorInfo.epochInfo.postOutcomeTime/1000*Fs);   % From ms to samples
-incorrEpochs = nan(ErrorInfo.epochInfo.nChs,OutcomeInfo.noutcms(7),ErrorInfo.epochInfo.preOutcomeTime/1000*Fs + ErrorInfo.epochInfo.postOutcomeTime/1000*Fs);   % From ms to samples
+%% Initializing vbles for epochs and baseline
+% epochSampLen before downsampling
+epochSampLen = round((ErrorInfo.epochInfo.preOutcomeTime + ErrorInfo.epochInfo.postOutcomeTime)/1000*Fs);
 
-% Load each channel
+if ErrorInfo.signalProcess.downSamp
+    % if downsampling 
+    epochMatrixSampLen = round((ErrorInfo.epochInfo.preOutcomeTime + ErrorInfo.epochInfo.postOutcomeTime)/1000*(Fs/ErrorInfo.signalProcess.downSampFactor));
+    % Initializing vbles for epochs and baseline
+    corrEpochs   = nan(ErrorInfo.epochInfo.nChs,OutcomeInfo.noutcms(1),epochMatrixSampLen);   % From ms to downsampled samples
+    incorrEpochs = nan(ErrorInfo.epochInfo.nChs,OutcomeInfo.noutcms(7),epochMatrixSampLen);   % From ms to downsampled samples
+    % Downsampling factor
+    Nth = ErrorInfo.signalProcess.downSampFactor;
+else
+    % if not downsampling (why not?) 
+    corrEpochs   = nan(ErrorInfo.epochInfo.nChs,OutcomeInfo.noutcms(1),epochSampLen);   % From ms to samples
+    incorrEpochs = nan(ErrorInfo.epochInfo.nChs,OutcomeInfo.noutcms(7),epochSampLen);   % From ms to samples
+end
+
+%% Load each channel
 for iCh = 1:ErrorInfo.epochInfo.nChs
     dataStr = sprintf('%slfp%03d',strgRef,iCh);                             % name of this channel
     dataName = sprintf('%s-%s.mat',fullfile(ErrorInfo.dirs.DataIn,ErrorInfo.session,ErrorInfo.session),dataStr);
@@ -131,7 +148,7 @@ for iCh = 1:ErrorInfo.epochInfo.nChs
     % Filtering data2epoch to filtData
     ErrorInfo.epochInfo.Fs = data.ChInfo.Fs;                                % Sampling frequency
     if iCh == 1
-        FiltParams = setFilterParams([ErrorInfo.epochInfo.filtLowBound ErrorInfo.epochInfo.filtHighBound],'butter',4,data.ChInfo.Fs);
+        FiltParams = setFilterParams([ErrorInfo.epochInfo.filtLowBound ErrorInfo.epochInfo.filtHighBound],ErrorInfo.epochInfo.filtType,ErrorInfo.epochInfo.filtOrder,data.ChInfo.Fs);
     end
     %disp('FiltParams:'), disp(FiltParams)
     %[Bcoef,Acoef] = butter(4,freqBands);   % Band width signal using Nyquist Freq to normalized 0.5-20 Hz band
@@ -146,7 +163,7 @@ for iCh = 1:ErrorInfo.epochInfo.nChs
         itiOnsetTime    = OutcomeInfo.(outcomes{iOut}).itiOnsetTime;        %#ok<*NASGU> % beginning of iti for next trial to start
         
         % Creating matrix to nest all epochs
-        epochVals = nan(OutcomeInfo.(outcomes{iOut}).nTrials,ErrorInfo.epochInfo.preOutcomeTime/1000*Fs + ErrorInfo.epochInfo.postOutcomeTime/1000*Fs);
+        epochVals = nan(OutcomeInfo.(outcomes{iOut}).nTrials,epochSampLen);
         
         % Center of analysis window
         if iOut == 1
@@ -158,10 +175,25 @@ for iCh = 1:ErrorInfo.epochInfo.nChs
         
         % Extract epochs per trial, per channel
         for iTrial = 1:OutcomeInfo.(outcomes{iOut}).nTrials
-            epochVals(iTrial,:)     = filtData(round(outcomeStimuli(iTrial)-ErrorInfo.epochInfo.preOutcomeTime + 1):round(outcomeStimuli(iTrial)+ErrorInfo.epochInfo.postOutcomeTime));
+            preSamples = round((outcomeStimuli(iTrial) - ErrorInfo.epochInfo.preOutcomeTime)/1000*Fs) + 1;
+            postSamples = round((outcomeStimuli(iTrial) + ErrorInfo.epochInfo.postOutcomeTime)/1000*Fs);
+            % Kludge! Sample size issues. If extra needed, add in the
+            % postOutcome window
+            if length(preSamples:postSamples) ~= epochSampLen
+                postSamples = postSamples + epochSampLen - length(preSamples:postSamples);
+            end
+            epochVals(iTrial,:) = filtData(preSamples:postSamples);
         end
         
-        % Creating corr and incorr epochs
+        %% Downsampling epochs
+        if ErrorInfo.signalProcess.downSamp
+            data2Downsamp = epochVals';          % Must be in the form [nSamples x nTrials], for matrix downsampling each column 
+            fprintf('Downsampling in %s channel %i by a factor of %i...\n',outcomes{iOut},iCh,Nth)
+            %  Each column is considered a separate sequence.
+            epochVals = downsample(data2Downsamp,Nth)';                       % each column is considered a separate sequence.
+        end
+        
+        %% Creating corr and incorr epochs
         if iOut == 1
             corrEpochs(iCh,:,:) = epochVals;
         else
@@ -172,21 +204,34 @@ for iCh = 1:ErrorInfo.epochInfo.nChs
     clear dataStr dataName data data2epoch filtData                         % erase data for this channel
 end
 
-% Size of epoch
-ErrorInfo.epochInfo.lenEpoch = ErrorInfo.epochInfo.postOutcomeTime/1000*Fs + ErrorInfo.epochInfo.preOutcomeTime/1000*Fs;        % epoch length given by sample size
+% Updating sampling frequency due to downsampling
+if ErrorInfo.signalProcess.downSamp
+    ErrorInfo.epochInfo.Fs = ErrorInfo.epochInfo.Fs/ErrorInfo.signalProcess.downSampFactor;
+    ErrorInfo.epochInfo.epochLen = ErrorInfo.epochInfo.epochLen/ErrorInfo.signalProcess.downSampFactor;
+    ErrorInfo.specParams.params.Fs = ErrorInfo.epochInfo.Fs;
+end
+
+%% Size of epoch
+ErrorInfo.epochInfo.epochSampLen = size(corrEpochs,3);
+ErrorInfo.epochInfo.numSamps = size(corrEpochs,3);
 
 % Saving the expected and decoded target (ground true and decoder's value)
+% for current and previous trial
 iOutVal = 'outcm1';
 ErrorInfo.epochInfo.corrExpTgt = OutcomeInfo.(iOutVal).ExpectedResponse;
 ErrorInfo.epochInfo.corrDcdTgt = OutcomeInfo.(iOutVal).Response;
+ErrorInfo.epochInfo.corrPrevTrialDcdTgt = OutcomeInfo.(iOutVal).prevTrialResponse;            % Previous trial true response
+ErrorInfo.epochInfo.corrPrevTrialExpTgt = OutcomeInfo.(iOutVal).preTrialExpectedResponse;     % Previous trial expected response
 iOutVal = 'outcm7';
 ErrorInfo.epochInfo.incorrExpTgt = OutcomeInfo.(iOutVal).ExpectedResponse;
 ErrorInfo.epochInfo.incorrDcdTgt = OutcomeInfo.(iOutVal).Response;
+ErrorInfo.epochInfo.incorrPrevTrialDcdTgt = OutcomeInfo.(iOutVal).prevTrialResponse;            % Previous trial true response
+ErrorInfo.epochInfo.incorrPrevTrialExpTgt = OutcomeInfo.(iOutVal).preTrialExpectedResponse;     % Previous trial expected response
 
-% Saving epochs
+%% Saving epochs
 if ErrorInfo.epochInfo.saveEpochs
-    saveFilename = sprintf('%s-corrIncorrEpochs-%s[%i-%ims]-[%0.1f-%iHz].mat',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-        strgRef,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+    saveFilename = sprintf('%s-corrIncorrEpochs%s.mat',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
+        infoStr.strSuffix);
     save(saveFilename,'corrEpochs','incorrEpochs','ErrorInfo','-v7.3')
 end
 

@@ -1,4 +1,4 @@
-function [tgt2DistEpochs] = getTgt2DistEpochs(tgtErrRPs,ErrorInfo)
+function [tgt2DistEpochs,numSampErrTrials] = getTgt2DistEpochs(tgtErrRPs,ErrorInfo)
 %
 % Separates error epochs by the distance to the real (expected) target
 % using the values given in 'dist2tgt'. The vble 'dist2tgt' has the
@@ -58,9 +58,13 @@ function [tgt2DistEpochs] = getTgt2DistEpochs(tgtErrRPs,ErrorInfo)
 %         meanEpochDist2:   matrix. [numChannels numDatapoints]. Mean error epoch for distance 2 to target location
 %         meanEpochDist3:   matrix. [numChannels numDatapoints]. Mean error epoch for distance 3 to target location
 %
-% Andres v1.0
-% Created May 2013
-% Last modified 12 July 2013
+% Author:   Andres 
+%
+% Andres    :   v1.0    : init. May 2013
+% Andres    :   v1.2    : 12 July 2013
+% Andres    :   v2.0    : changed the way the mean is calculated
+
+disp('Separating incorrectly decoded trials by their distance to true target location...')
 
 % Targets and distance to true locations
 nTgts = ErrorInfo.epochInfo.nTgts;  % total number of values
@@ -68,22 +72,28 @@ dist2tgt = [0 1 2 3 2 1];           % distance of decoded target to true target 
 
 % Create structure to store epochs based on distance to true target location (iTgt)
 tgt2DistEpochs = repmat(struct(...
-    'dist2tgt',[],...       % all possible distances of incorrect targets to true location    
+    'dist2tgt',[],...           % all possible distances of incorrect targets to true location    
     'dcdTgtRange',[],...        % possible values taken by dcd target for this true target location (iTgt)
     'numEpochsPerDist',[],...   % number of epochs for each distance to true location
+    'normNumEpochsPerDist',[],...% normalized (per target) number of epochs for each distance to true location
     'dcdTgtDist1',[],...        % decoded targets for the error epochs with distance 1 to the target location
     'epochDist1',[],...         % error epochs with error at a distance 1 to the target location
     'meanEpochDist1',[],...     % mean error epoch for distance 1 to target location
     'stdEpochDist1',[],...      % std of error epochs for distance 1 to target location
+    'sampErrEpochDist1',[],...  % sample error of error epochs for distance 1 to target location
     'dcdTgtDist2',[],...        % decoded targets for the error epochs with distance 2 to the target location
     'epochDist2',[],...         % error epochs with error at a distance 2 to the target location
     'meanEpochDist2',[],...     % mean error epoch for distance 2 to target location
     'stdEpochDist2',[],...      % std of error epochs for distance 2 to target location
+    'sampErrEpochDist2',[],...  % sample error of error epochs for distance 2 to target location
     'dcdTgtDist3',[],...        % decoded targets for the error epochs with distance 3 to the target location
     'epochDist3',[],...         % error epochs with error at a distance 3 to the target location
-    'meanEpochDist3',[],...    % mean error epoch for distance 3 to target location
-    'stdEpochDist3',[]),...      % std of error epochs for distance 3 to target location
+    'meanEpochDist3',[],...     % mean error epoch for distance 3 to target location
+    'stdEpochDist3',[],...      % std of error epochs for distance 3 to target location
+    'sampErrEpochDist3',[]),...  % sample error of error epochs for distance 3 to target location
     [1 nTgts]);
+
+numSampErrTrials = zeros(nTgts,3);
 
 % Analysis per target
 for iTgt  = 1:nTgts
@@ -99,7 +109,7 @@ for iTgt  = 1:nTgts
     
     tgt2DistEpochs(iTgt).dist2tgt = distVals;           % all possible distances of incorrect targets to true location
     tgt2DistEpochs(iTgt).dcdTgtRange = iTgtDcdTgts;     % possible values taken by dcd target for this true target location (iTgt)
-    tgt2DistEpochs(iTgt).numEpochsPerDist = [];         % number of epochs for each distance to true location
+    tgt2DistEpochs(iTgt).numEpochsPerDist = [0 0 0];    % number of epochs for each distance to true location
    
    % Organize error epochs based on dcd target distance to target location (given by 'iTgtDist2tgt')
    for ii = 1:length(distVals)
@@ -107,7 +117,7 @@ for iTgt  = 1:nTgts
        iDist2tgt = find(tmpDist == distVals(ii));       % epochs with decoded tgts at a 'distVals(ii)' distance from real target location
        iDcdTgt = incorrDcdTgt(iDist2tgt)';              % dcdTgts for this distance to true target location
        % Total number of epochs per distance to true target location  
-       tgt2DistEpochs(iTgt).numEpochsPerDist(1,ii) = length(iDcdTgt);               % total number of epochs for this distance to true target location
+       tgt2DistEpochs(iTgt).numEpochsPerDist(1,distVals(ii)) = length(iDcdTgt);               % total number of epochs for this distance to true target location
        % Error epochs
        iDistTxt = sprintf('epochDist%i',distVals(ii));  % name of field with distance ii
        tgt2DistEpochs(iTgt).(iDistTxt) = squeeze(iTgtEpochs(:,iDist2tgt,:));        % storing epochs in structure
@@ -115,20 +125,44 @@ for iTgt  = 1:nTgts
        iMeanDistTxt = sprintf('meanEpochDist%i',distVals(ii));                      % name of mean
        % Name of Standard deviation epochs
        stdDistTxt = sprintf('stdEpochDist%i',distVals(ii));
+       % Name of sample error epochs
+       sampErrDistTxt = sprintf('sampErrEpochDist%i',distVals(ii));
        % when there are more than 1 trials (so mean can be taken) 
        numDims = ndims(tgt2DistEpochs(iTgt).(iDistTxt));
        if  numDims == 3                               
+           sampErrNumTrial = size(tgt2DistEpochs(iTgt).(iDistTxt),2);
            tgt2DistEpochs(iTgt).(iMeanDistTxt) = squeeze(mean(tgt2DistEpochs(iTgt).(iDistTxt),2));      % mean error epoch for this distance to target location
            tgt2DistEpochs(iTgt).(stdDistTxt) = squeeze(std(tgt2DistEpochs(iTgt).(iDistTxt),0,2));       % std of error epoch for this distance to target location
+           tgt2DistEpochs(iTgt).(sampErrDistTxt) = squeeze(std(tgt2DistEpochs(iTgt).(iDistTxt),0,2)/sqrt(sampErrNumTrial));       % std of error epoch for this distance to target location
        elseif numDims == 2                                                                              % if only one trial, this is the mean
+           sampErrNumTrial = 1;
            tgt2DistEpochs(iTgt).(iMeanDistTxt) = tgt2DistEpochs(iTgt).(iDistTxt);                       % mean epoch for one epoch at 'ii' distance to target location
            tgt2DistEpochs(iTgt).(stdDistTxt) = zeros(ErrorInfo.epochInfo.nChs,ErrorInfo.epochInfo.epochLen);    % std of one trial is zero at 'ii' distance to target location
+           tgt2DistEpochs(iTgt).(sampErrDistTxt) = zeros(ErrorInfo.epochInfo.nChs,ErrorInfo.epochInfo.epochLen);       % std of error epoch for this distance to target location
        else
            warning('Number of dimensions is not 2 or 3!') %#ok<WNTAG>
        end
        % Dcd targets
        iDcdTgtTxt = sprintf('dcdTgtDist%i',distVals(ii));                           % name of std
        tgt2DistEpochs(iTgt).(iDcdTgtTxt) = iDcdTgt;                                 % storing dcd targets in structure
+       numSampErrTrials(iTgt,distVals(ii)) = sampErrNumTrial;
+   end
+   tgt2DistEpochs(iTgt).normNumEpochsPerDist = tgt2DistEpochs(iTgt).numEpochsPerDist/sum(tgt2DistEpochs(iTgt).numEpochsPerDist);
+
+   % Getting for each expected target location the number of trials decoded to other locations, using the dist2Tgt info
+   for iDist = 1:3
+       dcdTgt = eval(sprintf('tgt2DistEpochs(iTgt).dcdTgtDist%i',iDist)); %#ok<*NASGU>
+       eval(sprintf('tgt2DistEpochs(iTgt).numTrialsDcdTgtDist%i.rangeDcdTgt = unique(dcdTgt);',iDist));
+       %eval(sprintf('tgt2DistEpochs(iTgt).dist2Tgt%i.rangeDcdTgt = unique(dcdTgt);',iDist));
+       eval(sprintf('rangeDcdTgt = tgt2DistEpochs(iTgt).numTrialsDcdTgtDist%i.rangeDcdTgt;',iDist));          % Best known as 'rangeDcdTgt'
+       
+       %% Confusion matrix of decoded target
+       if isempty(rangeDcdTgt)        % any trials for this dist2Tgt?
+           eval(sprintf('tgt2DistEpochs(iTgt).numTrialsDcdTgtDist%i.nTrials = [0 0];',iDist));
+       else
+           for iRange = 1:length(rangeDcdTgt)
+               eval(sprintf('tgt2DistEpochs(iTgt).numTrialsDcdTgtDist%i.nTrials(iRange) = sum(dcdTgt == rangeDcdTgt(iRange));',iDist));
+           end
+       end
    end
 end
-
