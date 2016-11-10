@@ -46,10 +46,11 @@ end
 [expVar,n,pVals,mu,F] = myANOVA1(ErrorEpochs,ErrorID,ErrorInfo.analysis.ANOVA.analDim);%,ErrorInfo.epochInfo.ANOVA.epochLabel,ErrorInfo.epochInfo.ANOVA.grandMeanMethod,ErrorInfo.epochInfo.ANOVA.calcOmega2ExpVar);
 expVar = squeeze(expVar);
 pVals = squeeze(pVals);
+F = squeeze(F);
 
 %     figure, imagesc(squeeze(pVals)<0.01)
 %     close all
 
-
+end
 
 

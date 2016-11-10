@@ -24,3 +24,5 @@ ErrorInfo.epochInfo.nCorrEpochCorrPrevTrial   = sum(indxCorrPrevTrials);
 ErrorInfo.epochInfo.nCorrEpochErrPrevTrial    = sum(~indxCorrPrevTrials);
 ErrorInfo.epochInfo.nIncorrEpochCorrPrevTrial = sum(indxIncorrPrevTrials);
 ErrorInfo.epochInfo.nIncorrEpochErrPrevTrial  = sum(~indxIncorrPrevTrials);
+
+end
