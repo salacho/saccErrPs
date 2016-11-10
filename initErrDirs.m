@@ -67,8 +67,24 @@ switch host
         dirs.PTB        = 'C:\Users\salacho\Documents\MATLAB\toolbox\Psychtoolbox'; % Add path to PsychToolbox
         dirs.chronux    = 'C:\Users\salacho\Documents\MATLAB\chronux';            % Add path to chronux toolbox
         addpath(dirs.helpers)
+    
+    case 'scc1'
+        dirs.Code       = '/usr3/graduate/salacho/salacho/Code/saccErrPs';      % Dir w/ data analysis Code
+        dirs.helpers   	= '/usr3/graduate/salacho/salacho/Code/helpers';      % Dir w/ helpers analysis Code
+        dirs.DataIn     = '/projectnb/busplab/salacho/Data/saccErrPs/dlysac/ErrRPs';                  % Dir w/ datafiles. Mapping server using SFTP Net Drive
+        dirs.DataOut    = '/projectnb/busplab/salacho/Data/saccErrPs/dlysac/ErrRPs';
+        dirs.BCIparams  = '/projectnb/busplab/salacho/Data/saccErrPs/dlysac/ErrRPs';                  %Add path where all BCIparams are located
+        dirs.PTB        = '/usr3/graduate/salacho/salacho/Code/PsychToolbox'; % Add path to PsychToolbox
+        dirs.chronux    = '/usr3/graduate/salacho/salacho/Code/Chronux_matlab/chronux_code_2_00/chronux';            % Add path to chronux toolbox
+
     otherwise
-        disp('No paths have been estalished')
+        dirs.Code       = '/usr3/graduate/salacho/salacho/Code/saccErrPs';      % Dir w/ data analysis Code
+        dirs.helpers   	= '/usr3/graduate/salacho/salacho/Code/helpers';      % Dir w/ helpers analysis Code
+        dirs.DataIn     = '/projectnb/busplab/salacho/Data/saccErrPs/dlysac/ErrRPs';                  % Dir w/ datafiles. Mapping server using SFTP Net Drive
+        dirs.DataOut    = '/projectnb/busplab/salacho/Data/saccErrPs/dlysac/ErrRPs';
+        dirs.BCIparams  = '/projectnb/busplab/salacho/Data/saccErrPs/dlysac/ErrRPs';                  %Add path where all BCIparams are located
+        dirs.PTB        = '/usr3/graduate/salacho/salacho/Code/PsychToolbox'; % Add path to PsychToolbox
+        dirs.chronux    = '/usr3/graduate/salacho/salacho/Code/Chronux_matlab/chronux_code_2_00/chronux';            % Add path to chronux toolbox
 end
 
 % Set up path so code is accessible to Matlab
