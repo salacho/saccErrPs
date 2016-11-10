@@ -1,4 +1,4 @@
-function plotExpVarPrevTrialOutcome(expVar,pVals,ErrorInfo)
+function sfn2014_SwapChannels_plotExpVarPrevTrialOutcome(expVar,pVals,ErrorInfo)
 %
 %
 %
@@ -7,6 +7,22 @@ function plotExpVarPrevTrialOutcome(expVar,pVals,ErrorInfo)
 %
 % 09 Nov 2014
 
+if strcmp(ErrorInfo.plotInfo.arrayLoc{1},'SEF')
+    % Jonah: 'SEF'    'FEF'    'PFC'
+   %swapchannels to match Chico's order 
+   % Exp. Var 
+   tmpExpVar(1:32,:) = expVar(65:96,:);        % PFC in jonah is 65:96 -> PFC in Chico is 1:32
+    tmpExpVar(65:96,:) = expVar(33:64,:);            % FEF in Jonah is 33:64 -> 65:96 Chico
+    tmpExpVar(33:64,:) = expVar(1:32,:);            % FEF in Jonah is 33:64 -> 65:96 Chico
+% P-values
+    tmpPvals(1:32,:) = pVals(65:96,:);        % PFC in jonah is 65:96 -> PFC in Chico is 1:32
+    tmpPvals(65:96,:) = pVals(33:64,:);            % FEF in Jonah is 33:64 -> 65:96 Chico
+    tmpPvals(33:64,:) = pVals(1:32,:);            % FEF in Jonah is 33:64 -> 65:96 Chico
+end
+
+% Update vals
+expVar = tmpExpVar;
+pVals = tmpPvals;
 
 
 %% Params
@@ -51,7 +67,7 @@ set(hFig,'PaperPositionMode','auto','Position',[1281 1 1280 948],...
     'name',sprintf('%s for %s trials, exp. var. of effect of previous trial outcome',ErrorInfo.session,ErrorInfo.analysis.typeVble),...
     'NumberTitle','off','Visible',ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc(timeVector,chVector,(squeeze(expVar)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit/(size(expVar,2)*96)));
+hPlot = imagesc(timeVector,chVector,(squeeze(expVar)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize+8)
 
 % Plotting array limits
@@ -65,18 +81,13 @@ xlabel('Time from feedback onset [s]','FontSize',plotParams.axisFontSize+8,'Font
 ylabel('Electrode #','FontSize',plotParams.axisFontSize + 8,'FontWeight',plotParams.axisFontWeight)
 
 % Title
-title(sprintf('%s %s prevTrialOut Exp. Var. pVal <= %0.2f',ErrorInfo.session,ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit),'FontSize',plotParams.titleFontSize + 4,'FontWeight',plotParams.titleFontWeight)
+title(sprintf('%s %s prevTrialOutcome Exp. Var. all channels and arrays pVal <= %0.2f',ErrorInfo.session,ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit),'FontSize',plotParams.titleFontSize + 4,'FontWeight',plotParams.titleFontWeight)
 
 % Saving figures
 if ErrorInfo.plotInfo.savePlot
     disp('Saving file')
-    if any(ErrorInfo.session == 'p')
-           saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
+    saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz]-swapArraysJonah2Chico-SfNposter2014.png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
         ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-    else
-        saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-            ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-    end
     saveas(hFig,saveFilename)
 end
 clear hFig hPlot

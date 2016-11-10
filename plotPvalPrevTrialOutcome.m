@@ -1,4 +1,4 @@
-function plotExpVarPrevTrialOutcome(expVar,pVals,ErrorInfo)
+function plotPvalPrevTrialOutcome(expVar,pVals,ErrorInfo)
 %
 %
 %
@@ -51,7 +51,7 @@ set(hFig,'PaperPositionMode','auto','Position',[1281 1 1280 948],...
     'name',sprintf('%s for %s trials, exp. var. of effect of previous trial outcome',ErrorInfo.session,ErrorInfo.analysis.typeVble),...
     'NumberTitle','off','Visible',ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc(timeVector,chVector,(squeeze(expVar)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit/(size(expVar,2)*96)));
+hPlot = imagesc(timeVector,chVector,(pVals <= ErrorInfo.analysis.ANOVA.pValCrit/((size(expVar,2)*96))));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize+8)
 
 % Plotting array limits
@@ -71,10 +71,10 @@ title(sprintf('%s %s prevTrialOut Exp. Var. pVal <= %0.2f',ErrorInfo.session,Err
 if ErrorInfo.plotInfo.savePlot
     disp('Saving file')
     if any(ErrorInfo.session == 'p')
-           saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
+           saveFilename = sprintf('%s-%s-prevTrialOutcomePval-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
         ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
     else
-        saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
+        saveFilename = sprintf('%s-%s-prevTrialOutcomePval-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
             ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
     end
     saveas(hFig,saveFilename)

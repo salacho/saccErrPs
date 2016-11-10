@@ -9,6 +9,21 @@ function plotCrossCorrFreqBand_three(preIncorrXcorrFreqBand,postIncorrXcorrFreqB
 
 chList = ErrorInfo.chList;
 
+if any((ErrorInfo.session(1:4) == 'J'))
+    tmp1 = preIncorrXcorrFreqBand;
+    tmp2 = postIncorrXcorrFreqBand;
+    tmp3 = postCorrXcorrFreqBand;
+    
+    preIncorrXcorrFreqBand(:,:,1:32) = tmp1(:,:,65:96);
+    preIncorrXcorrFreqBand(:,:,33:96) = tmp1(:,:,1:64);
+    postIncorrXcorrFreqBand(:,:,1:32) = tmp2(:,:,65:96);
+    postIncorrXcorrFreqBand(:,:,33:96) = tmp2(:,:,1:64);
+    postCorrXcorrFreqBand(:,:,1:32) = tmp3(:,:,65:96);
+    postCorrXcorrFreqBand(:,:,33:96) = tmp3(:,:,1:64);
+else
+end
+
+
 % index
 deltaIndx  = find(strcmp(errDiffFreqTxt,'delta'));
 alphaIndx = find(strcmp(errDiffFreqTxt,'alpha'));
@@ -91,9 +106,9 @@ subplot(numel(couplingVars),1,numel(couplingVars));
 xlabel('Channel number','fontweight','bold','fontsize',12)
 
 subplot(numel(couplingVars),1,1);
-title(sprintf('%s:  %sFdbacXcorr',ErrorInfo.session,ErrorInfo.plotInfo.dataPeriod),'fontweight','bold','fontsize',13)
+title(sprintf('%s:  %sFdbacXcorr-PFCSEFFEF',ErrorInfo.session,ErrorInfo.plotInfo.dataPeriod),'fontweight','bold','fontsize',13)
 saveplotName = sprintf('%s-%s-%s',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',...
-ErrorInfo.session),ErrorInfo.plotInfo.dataPeriod,'Fdback-CrossFreqAmpCoupling.png');
+ErrorInfo.session),ErrorInfo.plotInfo.dataPeriod,'Fdback-CrossFreqAmpCoupling-PFCSEFFEF.png');
 saveas(hFig,saveplotName), %close(hFig)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

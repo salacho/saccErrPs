@@ -54,6 +54,9 @@ switch host
             case 'getSpec'
                 dirs.DataIn     = 'E:\Data_20160505\dlysac\ErrRPs';                  % Dir w/ datafiles. Mapping server using SFTP Net Drive
                 dirs.DataOut    = 'E:\Data_20160505\dlysac\ErrRPs';
+            case 'getSpecJonah'            
+                dirs.DataIn     = 'C:\Users\salacho\Documents\Analysis\dlysac\ErrRPs\';                  % Dir w/ datafiles. Mapping server using SFTP Net Drive
+                dirs.DataOut    = 'C:\Users\salacho\Documents\Analysis\dlysac\ErrRPs\';
             case 'loadSpec'
                 dirs.DataIn     = 'E:\Data\saccErrP';                  % Dir w/ datafiles. Mapping server using SFTP Net Drive
                 dirs.DataOut    = 'E:\Data\saccErrP';

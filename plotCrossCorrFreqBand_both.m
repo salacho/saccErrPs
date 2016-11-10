@@ -9,6 +9,17 @@ function plotCrossCorrFreqBand_both(XcorrFreqBand1,XcorrFreqBand2,errDiffFreqTxt
 
 chList = ErrorInfo.chList;
 
+if any((ErrorInfo.session(1:4) == 'J'))
+    tmp1 = XcorrFreqBand1;
+    tmp2 = XcorrFreqBand2;
+    XcorrFreqBand1(:,:,1:32) = tmp1(:,:,65:96);
+    XcorrFreqBand1(:,:,33:96) = tmp1(:,:,1:64);
+    XcorrFreqBand2(:,:,1:32) = tmp2(:,:,65:96);
+    XcorrFreqBand2(:,:,33:96) = tmp2(:,:,1:64);
+else
+end
+
+
 % index
 deltaIndx  = find(strcmp(errDiffFreqTxt,'delta'));
 alphaIndx = find(strcmp(errDiffFreqTxt,'alpha'));

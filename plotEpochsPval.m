@@ -1,4 +1,4 @@
-function plotEpochsExpVar(expVar,pVals,ErrorInfo)
+function plotEpochsPval(expVar,pVals,ErrorInfo)
 %
 %
 %
@@ -62,7 +62,7 @@ set(hFig,'PaperPositionMode','auto','Position',[1394         126        1006    
     'name',sprintf('%s Correct/Incorrect epochs explained variance for all arrays',ErrorInfo.session),...
     'NumberTitle','off','Visible','on')%ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc((squeeze(expVarMod)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit/size(expVar,2)*96));
+hPlot = imagesc((pVals <= ErrorInfo.analysis.ANOVA.pValCrit/(size(expVar,2)*96)));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels,'Ytick',YtickPos,'YtickLabel',YtickLabels)
 
 % Plotting array limits
@@ -81,11 +81,11 @@ title(sprintf('%s Epochs Exp. Var. for all channels and arrays pVal <= %0.3f',Er
 % Saving figures
 if ErrorInfo.plotInfo.savePlot
     if strcmp(ErrorInfo.session(1),'p')
-        saveFilename = sprintf('%s-epochsExpVar-[%i-%ims]-[%0.1f-%iHz]-balance.png',fullfile(ErrorInfo.dirs.saveFilename,ErrorInfo.session),...
+        saveFilename = sprintf('%s-epochsPval-[%i-%ims]-[%0.1f-%iHz]-balance.png',fullfile(ErrorInfo.dirs.saveFilename,ErrorInfo.session),...
         ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
     else
         
-    saveFilename = sprintf('%s-epochsExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
+    saveFilename = sprintf('%s-epochsPval-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
         ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
     end
     saveas(hFig,saveFilename)

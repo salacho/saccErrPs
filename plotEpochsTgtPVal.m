@@ -1,4 +1,4 @@
-function plotEpochsTgtExpVar(expVarTgt,pValsTgt,ErrorInfo)
+function plotEpochsTgtPVal(expVarTgt,pValsTgt,ErrorInfo)
 %
 %
 %
@@ -81,12 +81,12 @@ for iNorm = 0:1
         getSubPlot(iTgt,plotParams), hold on                                            % Get subplot location
 
         if iNorm == 0
-            hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgt,3)*96))));            % not normalized for all targets exp. variance
-            %hPlot = imagesc((squeeze(pValsTgt(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96)));            % not normalized for all targets exp. variance
+            %hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96))));            % not normalized for all targets exp. variance
+            hPlot = imagesc((squeeze(pValsTgt(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgt,3)*96)));            % not normalized for all targets exp. variance
             saveTxt = 'nonNorm';
         else
-            hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgt,3)*96)))/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
-            %hPlot = imagesc(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96)/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
+            %hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96)))/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
+            hPlot = imagesc(squeeze(pValsTgt(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgt,3)*96)/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
             saveTxt = 'Norm';
         end
         % Ratio of incorrect/correct trials per target
@@ -127,9 +127,9 @@ for iNorm = 0:1
     % Saving figures
     if ErrorInfo.plotInfo.savePlot
         if strcmp(ErrorInfo.session(1),'p')
-            saveFilename = sprintf('%s-epochsExpVarTgts-%s-[%i-%ims]-[%0.1f-%iHz]-balance.png',fullfile(ErrorInfo.dirs.saveFilename,ErrorInfo.session),...
+            saveFilename = sprintf('%s-epochsPvalTgts-%s-[%i-%ims]-[%0.1f-%iHz]-balance.png',fullfile(ErrorInfo.dirs.saveFilename,ErrorInfo.session),...
                 saveTxt,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-        else saveFilename = sprintf('%s-epochsExpVarTgts-%s-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
+        else saveFilename = sprintf('%s-epochsPvalTgts-%s-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
                 saveTxt,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
         end
         saveas(hFig,saveFilename)

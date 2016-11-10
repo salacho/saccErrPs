@@ -1,4 +1,4 @@
-function plotExpVarPrevTrialOutcome(expVar,pVals,ErrorInfo)
+function popPlotDist2TgtExpVar(expVar,pVals,ErrorInfo)
 %
 %
 %
@@ -18,9 +18,9 @@ arrayLoc = ErrorInfo.plotInfo.arrayLoc;
 % Plotting params
 plotParams.nXtick = 12;
 plotParams.nYtick = 10; %(AFSG-20140305)16; %96; set(gca,'fontsize',6)
-plotParams.axisFontSize = 16; %(AFSG-20140305)13;
+plotParams.axisFontSize = 18; %(AFSG-20140305)13;
 plotParams.axisFontWeight = 'Bold';
-plotParams.titleFontSize = 17;
+plotParams.titleFontSize = 19;
 plotParams.titleFontWeight = 'Bold';
 plotParams.plotColors(1,:) = [0 0 1];
 plotParams.lineWidth = 2;
@@ -51,7 +51,7 @@ set(hFig,'PaperPositionMode','auto','Position',[1281 1 1280 948],...
     'name',sprintf('%s for %s trials, exp. var. of effect of previous trial outcome',ErrorInfo.session,ErrorInfo.analysis.typeVble),...
     'NumberTitle','off','Visible',ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc(timeVector,chVector,(squeeze(expVar)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit/(size(expVar,2)*96)));
+hPlot = imagesc(timeVector,chVector,(squeeze(expVar)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize+8)
 
 % Plotting array limits
@@ -61,22 +61,17 @@ line([-ErrorInfo.epochInfo.preOutcomeTime/1000,ErrorInfo.epochInfo.postOutcomeTi
 hBar = colorbar;
 set(hBar,'Fontsize',plotParams.axisFontSize+8);
 
-xlabel('Time from feedback onset [s]','FontSize',plotParams.axisFontSize+8,'FontWeight',plotParams.axisFontWeight)
+xlabel('Time to feedback onset [s]','FontSize',plotParams.axisFontSize+8,'FontWeight',plotParams.axisFontWeight)
 ylabel('Electrode #','FontSize',plotParams.axisFontSize + 8,'FontWeight',plotParams.axisFontWeight)
 
 % Title
-title(sprintf('%s %s prevTrialOut Exp. Var. pVal <= %0.2f',ErrorInfo.session,ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit),'FontSize',plotParams.titleFontSize + 4,'FontWeight',plotParams.titleFontWeight)
+title(sprintf('%s %s Exp.Var. all channels and arrays pVal <= %0.2f',ErrorInfo.session,ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit),'FontSize',plotParams.titleFontSize + 4,'FontWeight',plotParams.titleFontWeight)
 
 % Saving figures
 if ErrorInfo.plotInfo.savePlot
-    disp('Saving file')
-    if any(ErrorInfo.session == 'p')
-           saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
-        ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-    else
-        saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-            ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
-    end
+    saveFilename = sprintf('%s-%s-ExpVar-balanced%i[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
+        ErrorInfo.analysis.typeVble,ErrorInfo.analysis.balanced,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+    disp(saveFilename)
     saveas(hFig,saveFilename)
 end
 clear hFig hPlot

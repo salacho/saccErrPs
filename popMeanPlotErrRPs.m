@@ -13,41 +13,11 @@ function popMeanPlotErrRPs(popMeanCorrEpochs,popMeanIncorrEpochs,popStdCorrEpoch
 % Andres
 % Created 20 June 2013
 % Last modified 20 June 2013
+% Andres    :   v2.0    : modified all parameters to match other files.
 
 %% Params
 % Getting layout for array/channel distribution
-test.NNs = 0; test.lapla = 0;
-layoutInfo = layout(1,test);
-
-% Plotting params
-plotParams.nXtick = 6;
-plotParams.axisFontSize = 7;
-plotParams.axisFontWeight = 'Bold';
-plotParams.titleFontSize = 12;
-plotParams.titleFontWeight = 'Bold';
-plotParams.plotColors(1,:) = [0 0 1];
-plotParams.lineWidth = 2;
-plotParams.lineStyle = '-';
-% Colors 
-FigHand = figure; plotParams.Color = colormap; close(FigHand);
-plotParams.Color = plotParams.Color(1:length(plotParams.Color)/32:end,:);   % 32 different colors
-
-XtickLabels = -popErrorInfo.epochInfo.preOutcomeTime:(popErrorInfo.epochInfo.postOutcomeTime + popErrorInfo.epochInfo.preOutcomeTime)/plotParams.nXtick:popErrorInfo.epochInfo.postOutcomeTime;
-XtickPos = (0:(popErrorInfo.epochInfo.lenEpoch-0)/plotParams.nXtick:popErrorInfo.epochInfo.lenEpoch);
-arrayLoc = {'PFC','SEF','FEF'};
-
-% Signals used to extract epochs plotted here
-switch popErrorInfo.epochInfo.typeRef
-    case 'lfp'
-        strgRef = '';
-    case 'lapla'
-        strgRef = 'lapla_';
-    case 'car'
-        strgRef = 'car';
-end
-
-% X values for error bar plots
-xVals = (1:1:length(popMeanCorrEpochs(1,:)));            % x values for error bar lot
+timeVector = (1:1:length(popMeanCorrEpochs(1,:)));            % x values for error bar lot
 
 %% Plot session-averaged signals for each channel and array
 for ii = 1:3
@@ -99,9 +69,9 @@ for ii = 1:3
         subplot(layoutInfo.rows,layoutInfo.colms,layoutInfo.subplot(subCh)) % subplot location using layout info
         
         plotParams.plotColors(1,:) = [0 0 1];
-        [plotErrCorr] = plotErrorBars(xVals,popMeanCorrEpochs(iCh,:),popMeanCorrEpochs(iCh,:)-popStdCorrEpochs(iCh,:),popMeanCorrEpochs(iCh,:)+popStdCorrEpochs(iCh,:),plotParams);               % Blue for correct epochs
+        [plotErrCorr] = plotErrorBars(timeVector,popMeanCorrEpochs(iCh,:),popMeanCorrEpochs(iCh,:)-popStdCorrEpochs(iCh,:),popMeanCorrEpochs(iCh,:)+popStdCorrEpochs(iCh,:),plotParams);               % Blue for correct epochs
         plotParams.plotColors(1,:) = [1 0 0];
-        [plotErrIncorr] = plotErrorBars(xVals,popMeanIncorrEpochs(iCh,:),popMeanIncorrEpochs(iCh,:)-popStdIncorrEpochs(iCh,:),popMeanIncorrEpochs(iCh,:)+popStdIncorrEpochs(iCh,:),plotParams);     % Red for correct epochs
+        [plotErrIncorr] = plotErrorBars(timeVector,popMeanIncorrEpochs(iCh,:),popMeanIncorrEpochs(iCh,:)-popStdIncorrEpochs(iCh,:),popMeanIncorrEpochs(iCh,:)+popStdIncorrEpochs(iCh,:),plotParams);     % Red for correct epochs
         axis tight
         set(gca,'FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels)
         
@@ -197,10 +167,10 @@ for ii = 1:3
     % Plot error bars
     subplot(1,3,ii), hold on,
     plotParams.plotColors(1,:) = [0 0 1];
-    [plotErrCorr] = plotErrorBars(xVals,meanChCorr,meanChCorr-stdChCorr,meanChCorr+stdChCorr,plotParams);               % Blue for correct epochs
+    [plotErrCorr] = plotErrorBars(timeVector,meanChCorr,meanChCorr-stdChCorr,meanChCorr+stdChCorr,plotParams);               % Blue for correct epochs
     title(['Correct and Incorrect Mean/STD for ',arrayLoc{ii}],'FontSize',plotParams.titleFontSize,'FontWeight',plotParams.titleFontWeight)
     plotParams.plotColors(1,:) = [1 0 0];
-    [plotErrIncorr] = plotErrorBars(xVals,meanChIncorr,meanChIncorr-stdChIncorr,meanChIncorr+stdChIncorr,plotParams);     % Red for correct epochs
+    [plotErrIncorr] = plotErrorBars(timeVector,meanChIncorr,meanChIncorr-stdChIncorr,meanChIncorr+stdChIncorr,plotParams);     % Red for correct epochs
     
     % Plot properties
     set(gca,'FontSize',plotParams.axisFontSize+2,'Xtick',XtickPos,'XtickLabel',XtickLabels)

@@ -23,8 +23,7 @@ ErrorInfo.analysis.ANOVA.calcOmega2ExpVar = 0;
 % Params
 Tgts = unique(ErrorInfo.epochInfo.corrExpTgt);
 nTgts = length(Tgts);
-nChs = ErrorInfo.epochInfo.nChs;
-nSamps = (ErrorInfo.epochInfo.epochLen)/1000*ErrorInfo.epochInfo.Fs;
+[nChs,~,nSamps] = size(tgtErrRPs(1).corrEpochs);
 
 % Initialize vbles
 expVarTgt = nan(nTgts,nChs,nSamps); 

@@ -37,25 +37,22 @@ outcomStr = {'Corr','Incorr'};
 % Transform data to be plotted
 [meanCorrSpec,meanIncorrSpec,ErrorInfo] = transfSpec(meanCorrSpec,meanIncorrSpec,ErrorInfo);
 
-% max and min limit
-for iArray = 1:length(plotInfo.arrayLoc)
-    nArrayChs = length(plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end));
-    % Corr
-    climCorr(1,iArray) =  min(reshape(meanCorrSpec(:,:,plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)),...
-        [length(timeVector)*length(freqVector)*nArrayChs 1]));
-    climCorr(2,iArray) = max(reshape(meanCorrSpec(:,:,plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)),...
-        [length(timeVector)*length(freqVector)*nArrayChs 1]));
-    % Incorr
-    climIncorr(1,iArray) =  min(reshape(meanIncorrSpec(:,:,plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)),...
-        [length(timeVector)*length(freqVector)*nArrayChs 1]));
-    climIncorr(2,iArray) = max(reshape(meanIncorrSpec(:,:,plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)),...
-        [length(timeVector)*length(freqVector)*nArrayChs 1]));
-    % ErrDiff
-   temp = climIncorr(:,iArray) - climCorr(:,iArray);
-   climErrDiff(:,iArray) = [min(temp),max(temp)];
-end
 
-climVal = [nanmin(climErrDiff(1,:)) nanmax(climErrDiff(2,:))];
+% max and min limit
+for iFreq = 1:size(plotInfo.specgram.freqs,1)
+    ErrorInfo.plotInfo.specgram.fStart =  ErrorInfo.plotInfo.specgram.freqs(iFreq,1);
+    ErrorInfo.plotInfo.specgram.fEnd = ErrorInfo.plotInfo.specgram.freqs(iFreq,2);
+    
+    % Find index of range of interest
+    [~,tStartIndx] = min(abs(timeVals - plotInfo.specgram.tStart));
+    [~,tEndIndx] = min(abs(timeVals - ErrorInfo.epochInfo.preOutcomeTime/1000 - plotInfo.specgram.tEnd));
+    [~,fStartIndx] = min(abs(freqVals - ErrorInfo.plotInfo.specgram.fStart));
+    [~,fEndIndx] = min(abs(freqVals - ErrorInfo.plotInfo.specgram.fEnd));
+    
+    % ErrDiff
+    data2plot = squeeze(meanIncorrSpec(tStartIndx:tEndIndx,fStartIndx:fEndIndx,:)) - squeeze(meanCorrSpec(tStartIndx:tEndIndx,fStartIndx:fEndIndx,:));
+    climErrDiff(:,iFreq) = [nanmin(nanmin(nanmin(data2plot))),nanmax(nanmax(nanmax(data2plot)))];
+end
 
 %% Plot each frequency range set in plotInfo.specgram.freqs
 for iFreq = 1:size(plotInfo.specgram.freqs,1)
@@ -73,6 +70,9 @@ for iFreq = 1:size(plotInfo.specgram.freqs,1)
     time2plot = timeVector(tStartIndx:tEndIndx);
     freq2plot = freqVector(fStartIndx:fEndIndx); %always aim a bit higuer than the freq. of interest
     
+    % Clims
+    climVal = climErrDiff(:,iFreq);
+    
     % Text
     infoStr = getInfoStr(ErrorInfo);
     
@@ -80,51 +80,6 @@ for iFreq = 1:size(plotInfo.specgram.freqs,1)
     % For each array
     for iArray = 1:length(plotInfo.arrayLoc)
         fprintf('For array %s and %i-%iHz...\n',plotInfo.arrayLoc{iArray},ErrorInfo.plotInfo.specgram.fStart,ErrorInfo.plotInfo.specgram.fEnd)
-        
-        %         %% For corr and incorr
-        %         if ErrorInfo.plotInfo.specgram.doCorr
-        %             for iOut = 1:length(outcomStr)
-        %                 hFig = figure;
-        %                 set(hFig,'PaperPositionMode','auto','Position',[1281 0 1280 948],...
-        %                     'name',sprintf('%s %s mean for %s-%s',ErrorInfo.session,outcomStr{iOut},plotInfo.arrayLoc{iArray},infoStr.strSpecTrans,infoStr.strSpecRange),...
-        %                     'NumberTitle','off','Visible',plotInfo.visible);
-        %
-        %                 % Plot all channel
-        %                 for iCh = plotInfo.arrayChs(iArray,1):plotInfo.arrayChs(iArray,end)
-        %                     subCh = mod(iCh - 1,32) + 1;                                        % channels from 1-32 per array
-        %                     subplot(plotInfo.layout.rows,plotInfo.layout.colms,plotInfo.layout.subplot(subCh)) % subplot location using layout info
-        %
-        %                     % Data 2 top
-        %                     eval(sprintf('data2plot = squeeze(mean%sSpec(tStartIndx:tEndIndx,fStartIndx:fEndIndx,iCh))'';',outcomStr{iOut}))         % remember to flip
-        %                     eval(sprintf('climVal = clim%s;',outcomStr{iOut}));
-        %                     imagesc(time2plot,freq2plot,data2plot);%,[climVal(1,iArray) climVal(2,iArray)])
-        %                     set(gca,'Ydir','normal');
-        %                     % add or no colorbar
-        %                     if ErrorInfo.plotInfo.specgram.doColorbar
-        %                         colorbar
-        %                     end
-        %                     % Axis properties
-        %                     title(sprintf('Ch%i',iCh),'FontSize',plotInfo.axisFontSz-1)
-        %                     set(gca,'FontSize',plotInfo.axisFontSz)
-        %                     axis tight
-        %                 end
-        %
-        %                 % legend
-        %                 subplot(plotInfo.layout.rows,plotInfo.layout.colms,1)                             % use subplot to place legend outside the graph
-        %                 legPlots = nan(3,1);
-        %                 for kk = 1:3, legPlots(kk) = plot(0,'Color',plotInfo.colorErrP(kk,:),'lineWidth',2); hold on, end;    % plot fake data to polace legends
-        %                 legend(legPlots,{[char(plotInfo.arrayLoc(iArray)),infoStr.strSpecTrans],outcomStr{iOut},ErrorInfo.session},0)
-        %                 axis off                                                                % remove axis and background
-        %
-        %                 % Saving figures
-        %                 if plotInfo.savePlot
-        %                     saveFilename = sprintf('%s-%s-meanEpochSpectrog%s-%s-%s%s.png',infoStr.strPrefix,...
-        %                         outcomStr{iOut},infoStr.strSpecTrans,plotInfo.arrayLoc{iArray},infoStr.strSpecRange,infoStr.strSuffix);
-        %                     saveas(hFig,saveFilename)
-        %                     close(hFig)
-        %                 end
-        %             end
-        %         end
         
         %% Incorrect - Correct
         hFig = figure;
@@ -157,13 +112,13 @@ for iFreq = 1:size(plotInfo.specgram.freqs,1)
         
         subplot(plotInfo.layout.rows,plotInfo.layout.colms,6)                             % use subplot to place legend outside the graph
         legColorbar(1) = imagesc(time2plot,freq2plot,climVal);
-        hColor = colorbar; hLeg = legend(legColorbar,sprintf('%s',ErrorInfo.plotInfo.specgram.transfType),0);
+        hColor = colorbar; hLeg = legend(legColorbar,sprintf('SameClim AllArrays-%s',ErrorInfo.plotInfo.specgram.transfType),0,'location','northoutside');
         set(hLeg,'box','off','fontweight','bold'), axis off                                                                % remove axis and background
         hold on
         
         % Saving figures
         if plotInfo.savePlot
-            saveFilename = sprintf('%s-ErrDiff-meanEpochSpectrog%s-%s-allArraysClim-%s-%s%s.png',infoStr.strPrefix,...
+            saveFilename = sprintf('%s-ErrDiff-meanEpochSpectrog%s-%s-sameClimAllArrays-%s-%s%s.png',infoStr.strPrefix,...
                 infoStr.strSpecTrans,plotInfo.arrayLoc{iArray},ErrorInfo.plotInfo.specgram.transfType,infoStr.strSpecRange,infoStr.strSuffix);
             saveas(hFig,saveFilename)
             close(hFig)

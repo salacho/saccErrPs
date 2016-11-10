@@ -57,6 +57,11 @@ switch ErrorInfo.featSelect.predFunction{1}
         warning('This feature extraction approach is not available. Come back later!')
 end
 
+%% Spike features
+if ErrorInfo.spikeInfo.useChnlsWithUnitsOnly
+   warning('Remove channels that do not have units!!!')     
+end
+    
 %% Select features
 switch ErrorInfo.featSelect.predSelectType
     % ANOVA analysis
@@ -89,6 +94,8 @@ end
 %% Saving vbles in ErrorInfo structure
 ErrorInfo.featSelect.nP = nP;
 ErrorInfo.featSelect.predictorsToUse = predictorsToUse;                 % To point the channels and windows the predictors come from
+ErrorInfo.featSelect.nTrials = nTrials;
+
 fprintf('Feature reduction using %s function gave a total of %i predictors...\n',ErrorInfo.featSelect.predSelectType,ErrorInfo.featSelect.nP)
 
 tEnd = toc(tStart);                                                     % time took to select features
