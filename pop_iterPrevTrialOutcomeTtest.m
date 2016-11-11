@@ -34,15 +34,6 @@ if ~isfield(popErrorInfo.epochInfo,'nCorrBad')
     [popCorr,popIncorr,ErrorInfo] = popDownSamp(popCorr,popIncorr,ErrorInfo);
 end
 
-%% Separate in 6 targets
-% [meanPopTgt,meanPopDist2Tgt,stdPopDist2Tgt,ErrorInfo]
-%[popTgtErrPs,popDcdTgt] = popGetTgtErrPs(sessionList,popCorr,popIncorr,popDcdTgt);
-[popTgtErrPs,popTgt2DistEpochs,meanPopTgt,meanPopDist2Tgt,stdPopDist2Tgt,popErrorInfo] = popGetTgtErrPs(sessionList,popCorr,popIncorr,popErrorInfo);
-
-% %% Save files
-% tgt2DistSavefilename = 'E:\Data_20160505\dlysac\ErrRPs\popAnalysis\popJS20140318-JS20140328-9-corrIncorr-Tgt2DistEpochs-downSamp1[600-600ms]-butt4[1.0-10Hz].mat';
-% save(tgt2DistSavefilename,'popTgtErrPs','popTgt2DistEpochs','meanPopTgt','meanPopDist2Tgt','stdPopDist2Tgt','ErrorInfo','popDcdTgt','sessionList','-v7.3');
-
 %% Get epochs for both options in previous trial outcome (correct and
 % incorrect)
 [corrEpochsCorrPrev,corrEpochsErrPrev,incorrEpochsCorrPrev,incorrEpochsErrPrev,popErrorInfo] =  ...
