@@ -81,7 +81,7 @@ else
 end
 
 saveFilename = fullfile(dirs.DataIn,'popAnalysis',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_Ttest.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
-save(saveFilename,'expVarCorr','nCorr','pValsCorr','muCorr','FCorr','expVarIncorr','nIncorr','pValsIncorr','muIncorr','FIncorr','nIter','popErrorInfo')
+save(saveFilename,'expVarCorr','nCorr','pValsCorr','muCorr','FCorr','expVarIncorr','nIncorr','pValsIncorr','muIncorr','FIncorr','nIter','popErrorInfo','-v7.3')
 
 % get 95% upper bound and 5% lower bound and get mean.
 
