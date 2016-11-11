@@ -1,4 +1,4 @@
-function pop_iterCrossFreqAmpTtest(subject)
+function pop_iterCrossFreqAmpTtest(iIter,subject)
 %
 %
 %
@@ -56,37 +56,56 @@ timeVector = 0:ErrorInfo.specParams.movingWin(2):timeRange;
 timeVector = specTimeStart + timeVector(1:nTimes);
 [~,fdbackStart] = min(abs(timeVector));
 
-% pre-allocate memory
-preCorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
-preIncorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
-postCorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
-postIncorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
+% %% When iIter was local
+% % pre-allocate memory
+% preCorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
+% preIncorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
+% postCorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
+% postIncorrXcorrFreqBand = nan(size(popCorrFreqBand,2),size(popCorrFreqBand,2),size(popCorrFreqBand,4),nIter);
+% 
+% % Get vals for balanced analysis
+% nCorr = size(popCorrFreqBand,3);
+% nError = size(popIncorrFreqBand,3);
+% 
+% % Iterate
+% for iIter = 1:nIter
+%     fprintf('cross-Freq amp-amp coupling for iter %i...\n',iIter)
+%     % Randomly choosing trials, not always the first ones
+%     corrIndxRandBalance = randsample(nCorr,nCorr,'true');
+%     incorrIndxRandBalance = randsample(nError,nError,'true');
+%     
+%     % Compute cross-coherence
+%     preCorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popCorrFreqBand(1:fdbackStart,:,corrIndxRandBalance,:));
+%     preIncorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popIncorrFreqBand(1:fdbackStart,:,incorrIndxRandBalance,:));
+%     postCorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popCorrFreqBand(fdbackStart:end,:,corrIndxRandBalance,:));
+%     postIncorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popIncorrFreqBand(fdbackStart:end,:,incorrIndxRandBalance,:));
+% end
+% 
+
+%% iIter is outside this function
 
 % Get vals for balanced analysis
 nCorr = size(popCorrFreqBand,3);
 nError = size(popIncorrFreqBand,3);
 
 % Iterate
-for iIter = 1:nIter
-    fprintf('cross-Freq amp-amp coupling for iter %i...\n',iIter)
-    % Randomly choosing trials, not always the first ones
-    corrIndxRandBalance = randsample(nCorr,nCorr,'true');
-    incorrIndxRandBalance = randsample(nError,nError,'true');
-    
-    % Compute cross-coherence
-    preCorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popCorrFreqBand(1:fdbackStart,:,corrIndxRandBalance,:));
-    preIncorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popIncorrFreqBand(1:fdbackStart,:,incorrIndxRandBalance,:));
-    postCorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popCorrFreqBand(fdbackStart:end,:,corrIndxRandBalance,:));
-    postIncorrXcorrFreqBand(:,:,:,iIter) = crossCorrFreqBand(popIncorrFreqBand(fdbackStart:end,:,incorrIndxRandBalance,:));
-end
+fprintf('cross-Freq amp-amp coupling for iter %i...\n',iIter)
+% Randomly choosing trials, not always the first ones
+corrIndxRandBalance = randsample(nCorr,nCorr,'true');
+incorrIndxRandBalance = randsample(nError,nError,'true');
+
+% Compute cross-coherence
+preCorrXcorrFreqBand = crossCorrFreqBand(popCorrFreqBand(1:fdbackStart,:,corrIndxRandBalance,:));
+preIncorrXcorrFreqBand = crossCorrFreqBand(popIncorrFreqBand(1:fdbackStart,:,incorrIndxRandBalance,:));
+postCorrXcorrFreqBand = crossCorrFreqBand(popCorrFreqBand(fdbackStart:end,:,corrIndxRandBalance,:));
+postIncorrXcorrFreqBand = crossCorrFreqBand(popIncorrFreqBand(fdbackStart:end,:,incorrIndxRandBalance,:));
 
 %% Save files
 ErrorInfo.dirs = dirs;
 ErrorInfo.session = session;
-saveCrossFreqName = sprintf('%s_%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterCrossFreqCoupling.mat');
+saveCrossFreqName = sprintf('%s_%s-%i%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterCrossFreqCoupling',iIter,'.mat');
 save(saveCrossFreqName,'preCorrXcorrFreqBand','preIncorrXcorrFreqBand',...
-    'postCorrXcorrFreqBand','postIncorrXcorrFreqBand','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','-v7.3')
-
+    'postCorrXcorrFreqBand','postIncorrXcorrFreqBand','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','iIter','nIter','-v7.3')
                        
 end
 
