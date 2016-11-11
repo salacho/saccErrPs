@@ -39,7 +39,7 @@ end
 [corrEpochsCorrPrev,corrEpochsErrPrev,incorrEpochsCorrPrev,incorrEpochsErrPrev,popErrorInfo] =  ...
     getCorrErrEpochsPrevTrialOutcome(popCorr,popIncorr,popErrorInfo);
 
-%% Exp.Var. previous trial outcome for correct and incorrect trials
+%% T.test previous trial outcome for correct and incorrect trials
 popErrorInfo.analysis.balanced = 1;
 
 if popErrorInfo.analysis.balanced
