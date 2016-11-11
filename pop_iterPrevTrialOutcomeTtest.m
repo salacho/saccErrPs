@@ -20,12 +20,14 @@ if strcmpi(subject,'chico')
    popFilesPath = fullfile(dirs.DataIn,'popAnalysis','popCS20121012-CS20121026-11-corrIncorr--rmvNoisTrials-downSamp10[600-600ms]-butt4[1.0-10Hz].mat');
    load(popFilesPath);
    popErrorInfo.subject = 'chico';
+   popErrorInfo.session = 'popCS20121012-CS20121026-11';
 else
     disp('Loading popEpochs for Jonah...')
     sessionList = {'JS20140318';'JS20140319';'JS20140320';'JS20140321';'JS20140324';'JS20140325';'JS20140326';'JS20140327';'JS20140328'};                            %Jonahs SfN Abstract.
     popFilesPath = fullfile(dirs.DataIn,'popAnalysis','popJS20140318-JS20140328-9-corrIncorr--rmvNoisTrials-downSamp10[600-600ms]-butt4[1.0-10Hz].mat');
     load(popFilesPath);
     popErrorInfo.subject = 'jonah';
+    popErrorInfo.session = 'popJS20140318-JS20140328-9';
 end
 
 %% Down sample data!!
@@ -41,6 +43,7 @@ end
 
 %% T.test previous trial outcome for correct and incorrect trials
 popErrorInfo.analysis.balanced = 1;
+ErrorInfo.analysis.withReplacement = 'true';
 
 if popErrorInfo.analysis.balanced
     % Define vars

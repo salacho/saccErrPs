@@ -15,6 +15,13 @@ ErrorInfo.analysis.ANOVA.grandMeanMethod = 0;
 ErrorInfo.analysis.ANOVA.calcOmega2ExpVar = 0;
 ErrorInfo.analysis.ANOVA.analDim = 3;
 
+% With replacement or not
+if isfield(ErrorInfo.analysis,'withReplacement')
+    withReplacement = ErrorInfo.analysis.withReplacement;
+else
+    withReplacement  = 0;
+end
+
 % Number trials
 nCorr = size(popCorrFreqBand,ErrorInfo.analysis.ANOVA.analDim);
 nError = size(popIncorrFreqBand,ErrorInfo.analysis.ANOVA.analDim);
@@ -24,12 +31,21 @@ if ~isfield(ErrorInfo.analysis,'balanced')
     ErrorInfo.analysis.balanced = 1;
 end
 
+%% Balanced data or not
 if ErrorInfo.analysis.balanced
     % Create vbles
     nBalanced = min([nCorr nError]);
-    % Randomly choosing trials, not always the first ones
-    corrIndxRandBalance = randsample(nCorr,nBalanced);
-    incorrIndxRandBalance = randsample(nError,nBalanced);
+    
+    % Replace or not values
+    if withReplacement
+        % Randomly choosing trials, not always the first ones
+        corrIndxRandBalance = randsample(nCorr,nBalanced,'true');
+        incorrIndxRandBalance = randsample(nError,nBalanced,'true');
+    else
+        % Randomly choosing trials, not always the first ones
+        corrIndxRandBalance = randsample(nCorr,nBalanced);
+        incorrIndxRandBalance = randsample(nError,nBalanced);
+    end
     % Data and labels for analysis
     ErrorEpochs = cat(3,popCorrFreqBand(:,:,corrIndxRandBalance,:), popIncorrFreqBand(:,:,incorrIndxRandBalance,:));
     ErrorID = [zeros(nBalanced,1);ones(nBalanced,1)];

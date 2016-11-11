@@ -14,6 +14,13 @@ ErrorInfo.analysis.ANOVA.grandMeanMethod = 0;
 ErrorInfo.analysis.ANOVA.calcOmega2ExpVar = 0;
 ErrorInfo.analysis.ANOVA.analDim = 2;
 
+% With replacement or not
+if isfield(ErrorInfo.analysis,'withReplacement')
+    withReplacement = ErrorInfo.analysis.withReplacement;
+else
+    withReplacement  = 0;
+end
+
 % Fix dims
 corrEpochs = fixEpochs3dims(corrEpochs);
 incorrEpochs = fixEpochs3dims(incorrEpochs);
@@ -30,9 +37,18 @@ end
 if ErrorInfo.analysis.balanced
     % Create vbles
     nBalanced = min([nCorr nError]);
-    % Randomly choosing trials, not always the first ones
-    corrIndxRandBalance = randsample(nCorr,nBalanced);
-    incorrIndxRandBalance = randsample(nError,nBalanced);
+
+    % Replace or not values
+    if withReplacement
+        % Randomly choosing trials, not always the first ones
+        corrIndxRandBalance = randsample(nCorr,nBalanced,'true');
+        incorrIndxRandBalance = randsample(nError,nBalanced,'true');
+    else
+        % Randomly choosing trials, not always the first ones
+        corrIndxRandBalance = randsample(nCorr,nBalanced);
+        incorrIndxRandBalance = randsample(nError,nBalanced);
+    end
+    
     % Data and labels for analysis
     ErrorEpochs = [corrEpochs(:,corrIndxRandBalance,:), incorrEpochs(:,incorrIndxRandBalance,:)];
     ErrorID = [zeros(nBalanced,1);ones(nBalanced,1)];

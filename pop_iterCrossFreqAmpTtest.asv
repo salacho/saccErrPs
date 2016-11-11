@@ -1,4 +1,4 @@
-function pop_iterFreBandTtest(subject)
+function pop_iterCrossFreqAmpTtest(subject)
 %
 %
 %
@@ -29,51 +29,65 @@ session = sprintf('pop%s-%s-%i',sessionList{1},sessionList{end}(7:end),numel(ses
 loadFreqbandName = sprintf('%s-%s',fullfile(dirs.DataOut,'popAnalysis',session),'freqBands.mat');
 load(loadFreqbandName)
 
+% Remove sessionListC and J to avoid confusion 
 if exist('sessionsListC','var'), clear sessionsListC
 elseif exist('sessionsListJ','var'), clear sessionsListJ
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Plot freq.bands 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ErrorInfo.plotInfo.specgram.doColorbar = 0;
 ErrorInfo.plotInfo.specgram.tStart      = -0.4;                             % start in time for spectrogram plotting
 ErrorInfo.plotInfo.specgram.tEnd        = 1;                              % end in time for spectrogram plotting
 ErrorInfo.plotInfo.specgram.fStart      = 0;                                % lower bound frequency to plot. Used for naming files. Comes from 'ErrorInfo.plotInfo.specgram.freqs'
 ErrorInfo.plotInfo.specgram.fEnd        = 200;                              % upper bound frequency to plot
 
-errDiffFreqBand = (squeeze(nanmean(popIncorrFreqBand,3)) - squeeze(nanmean(popCorrFreqBand,3)));
-ErrorInfo.plotInfo.specgram.transfType  = 'db';                         % string. %'freqzscore', 'norm', '' Z-score each freq. band over all time axis, 'allzscore' Z-score based on all data, along all freqs. and time points
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Amplitude-amplitude cross-frequency coupling %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Freq. band two sample T-test
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% T.test previous trial outcome for correct and incorrect trials
-ErrorInfo.analysis.balanced = 1;
+% Define vars
 ErrorInfo.analysis.withReplacement = 'true';
- 
-if ErrorInfo.analysis.balanced
-    % Define vars
-    nIter = 1000;
-    expVarFreq = nan(size(popCorrFreqBand,1),size(popCorrFreqBand,2),nIter,size(popCorrFreqBand,4));
-    pValsFreq = nan(size(popCorrFreqBand,1),size(popCorrFreqBand,2),nIter,size(popCorrFreqBand,4));
-    FFreq = nan(size(popCorrFreqBand,1),size(popCorrFreqBand,2),nIter,size(popCorrFreqBand,4));
-    muFreq = nan(size(popCorrFreqBand,1),size(popCorrFreqBand,2),2,size(popCorrFreqBand,4),nIter);
-    nFreq = nan(2,nIter);
+ErrorInfo.analysis.balanced = 1;
+nIter = 1000;
+
+nTimes = size(popCorrFreqBand,1);
+specTimeStart = -ErrorInfo.epochInfo.preOutcomeTime/1000 + ErrorInfo.specParams.movingWin(1)/2;
+timeRange = ErrorInfo.epochInfo.postOutcomeTime/1000 + ErrorInfo.epochInfo.preOutcomeTime/1000;
+timeVector = 0:ErrorInfo.specParams.movingWin(2):timeRange;
+timeVector = specTimeStart + timeVector(1:nTimes);
+[~,fdbackStart] = min(abs(timeVector));
+
+% pre-allocate memory
+preCorrXcorrFreqBand = nan(popCorrFreqBand);
+preIncorrXcorrFreqBand = nan(popIncorrFreqBand);
+postCorrXcorrFreqBand = nan(popCorrFreqBand);
+postIncorrXcorrFreqBand = nan(popIncorrFreqBand);
+
+% Get vals for balanced analysis
+nCorr = size(popCorrFreqBand,3);
+nError = size(popIncorrFreqBand,3);
+
+
+% Iterate
+for iIter = 1:nIter
+    fprintf('cross-Freq amp-amp coupling for iter %i...\n',iIter)
+    % Randomly choosing trials, not always the first ones
+    corrIndxRandBalance = randsample(nCorr,nCorr,'true');
+    incorrIndxRandBalance = randsample(nError,nError,'true');
     
-    % Iterate
-    for iIter =1:nIter
-        fprintf('T-test for freqBands for iter %i...\n',iIter)
-        [expVarFreq(:,:,iIter,:),nFreq(:,iIter),pValsFreq(:,:,iIter,:),muFreq(:,:,:,:,iIter),FFreq(:,:,iIter,:),ErrorInfo] = getFreqBandT_test(popCorrFreqBand,popIncorrFreqBand,ErrorInfo);
-    end
-else
-    [expVarFreq,nFreq,pValsFreq,muFreq,FFreq,ErrorInfo] = getFreqBandT_test(popCorrFreqBand,popIncorrFreqBand,ErrorInfo);
+    % Compute cross-coherence
+    preCorrXcorrFreqBand = crossCorrFreqBand(popCorrFreqBand(1:fdbackStart,:,corrIndxRandBalance,:));
+    preIncorrXcorrFreqBand = crossCorrFreqBand(popIncorrFreqBand(1:fdbackStart,:,incorrIndxRandBalance,:));
+    postCorrXcorrFreqBand = crossCorrFreqBand(popCorrFreqBand(fdbackStart:end,:,corrIndxRandBalance,:));
+    postIncorrXcorrFreqBand = crossCorrFreqBand(popIncorrFreqBand(fdbackStart:end,:,incorrIndxRandBalance,:));
 end
 
-% save freqbands
+%% Save files
 ErrorInfo.dirs = dirs;
 ErrorInfo.session = session;
-saveFreqbandName = sprintf('%s-%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterTtest_freqBands.mat');
-save(saveFreqbandName,'expVarFreq','nFreq','pValsFreq','muFreq','FFreq','ErrorInfo','-v7.3')
+saveCrossFreqName = sprintf('%s_%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterCrossFreqCoupling.mat');
+save(saveCrossFreqName,'preCorrXcorrFreqBand','preIncorrXcorrFreqBand',...
+    'postCorrXcorrFreqBand','postIncorrXcorrFreqBand','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','-v7.3')
 
+                       
 end
+
