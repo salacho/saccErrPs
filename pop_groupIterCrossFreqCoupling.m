@@ -19,7 +19,7 @@ if strcmpi(subject,'chico')
    disp('Loading popEpochs for Chico...')
    sessionList = {'CS20121012';'CS20121015';'CS20121016';'CS20121017';'CS20121018';'CS20121019';'CS20121022';'CS20121023';'CS20121024';'CS20121025';'CS20121026'};  %Chicos SfN Abstract.
    popErrorInfo.subject = 'chico';
-   popErrorInfo.session = 'popCS20121012-CS20121026-11';
+   session = 'popCS20121012-CS20121026-11';
 else
     disp('Loading popEpochs for Jonah...')
     sessionList = {'JS20140318';'JS20140319';'JS20140320';'JS20140321';'JS20140324';'JS20140325';'JS20140326';'JS20140327';'JS20140328'};                            %Jonahs SfN Abstract.
