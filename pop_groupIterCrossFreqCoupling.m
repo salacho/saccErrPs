@@ -24,14 +24,14 @@ else
     disp('Loading popEpochs for Jonah...')
     sessionList = {'JS20140318';'JS20140319';'JS20140320';'JS20140321';'JS20140324';'JS20140325';'JS20140326';'JS20140327';'JS20140328'};                            %Jonahs SfN Abstract.
     popErrorInfo.subject = 'jonah';
-    popErrorInfo.session = 'popJS20140318-JS20140328-9';
+    session = 'popJS20140318-JS20140328-9';
 end
 
 %% Iterate
 nIter = 1000; 
 for iIter =1:nIter
     % load
-    file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',popFreqSuffix,iIter);
+    file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',session,iIter);
     % reArrange
     preCorrXcorrFreqBand_allIter(:,:,:,iIter) = preCorrXcorrFreqBand;
     preIncorrXcorrFreqBand_allIter(:,:,:,iIter)  = preIncorrXcorrFreqBand;
@@ -40,9 +40,8 @@ for iIter =1:nIter
 end
 
 %% Save
-saveFilename = sprintf('%s_iterCrossFreqCoupling-allIter.mat',popFreqSuffix);
+saveFilename = sprintf('%s_iterCrossFreqCoupling-allIter.mat',session);
 save(saveCrossFreqName,'preCorrXcorrFreqBand_allIter','preIncorrXcorrFreqBand_allIter',...
     'postCorrXcorrFreqBand_allIter','postIncorrXcorrFreqBand_allIter','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','nIter','-v7.3')
-
 
 end
