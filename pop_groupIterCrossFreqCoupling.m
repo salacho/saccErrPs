@@ -32,6 +32,7 @@ nIter = 1000;
 for iIter =1:nIter
     % load
     file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',session,iIter);
+    load(file2Load);
     % reArrange
     preCorrXcorrFreqBand_allIter(:,:,:,iIter) = preCorrXcorrFreqBand;
     preIncorrXcorrFreqBand_allIter(:,:,:,iIter)  = preIncorrXcorrFreqBand;
