@@ -32,6 +32,7 @@ nIter = 1000;
 for iIter =1:nIter
     % load
     file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',session,iIter);
+    file2Load = fullfile(dirs.DataOut,'popAnalysis',file2Load);
     load(file2Load);
     % reArrange
     preCorrXcorrFreqBand_allIter(:,:,:,iIter) = preCorrXcorrFreqBand;
@@ -41,8 +42,8 @@ for iIter =1:nIter
 end
 
 %% Save
-saveFilename = sprintf('%s_iterCrossFreqCoupling-allIter.mat',session);
-save(saveCrossFreqName,'preCorrXcorrFreqBand_allIter','preIncorrXcorrFreqBand_allIter',...
+saveFilename = fullfile(dirs.DataOut,'popAnalysis',sprintf('%s_iterCrossFreqCoupling-allIter.mat',session));
+save(saveFilename,'preCorrXcorrFreqBand_allIter','preIncorrXcorrFreqBand_allIter',...
     'postCorrXcorrFreqBand_allIter','postIncorrXcorrFreqBand_allIter','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','nIter','-v7.3')
 
 end
