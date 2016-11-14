@@ -29,7 +29,7 @@ end
 
 %% Iterate
 nIter = 1000; 
-fileExist = zeros(nIter,1);
+fileExist = nan(nIter,1);
 for iIter =1:nIter
     % load
     file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',session,iIter);

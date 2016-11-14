@@ -504,4 +504,18 @@ end
 %%%% TRUE PLOT OF DIFFERENCES!!!
 plotCrossCorrFreqBand_ErrDiffpostPreDiff(preIncorrXcorrFreqBand,postIncorrXcorrFreqBand,preCorrXcorrFreqBand,postCorrXcorrFreqBand,errDiffFreqTxt,ErrorInfo)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 100 iter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% in cluster run 1000 times
+subject = 'chico';
+pop_iterCrossFreqAmpTtest(iIter,subject)
+% aggregate results
+pop_groupIterCrossFreqCoupling_fileExist(subject)
+% load aggregated iters
+load('E:\Data\saccErrP\popAnalysis\popCS20121012-1026-11_iterCrossFreqCoupling-allIter.mat')
+load('E:\Data\saccErrP\popAnalysis\popJS20140318-0328-9_iterCrossFreqCoupling-allIter.mat')
+% plot average across iter
+plotCrossCorrFreqBand_ErrDiffpostPreDiff_aveGroup1000Iter(preIncorrXcorrFreqBand_allIter,postIncorrXcorrFreqBand_allIter,preCorrXcorrFreqBand_allIter,postCorrXcorrFreqBand_allIter,errDiffFreqTxt,ErrorInfo)
+
 end
