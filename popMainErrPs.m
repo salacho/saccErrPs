@@ -9,27 +9,31 @@ function popMainErrPs(sessionList)
 %
 % 20 Nov 2014
 
-clear all, close all, clc
+clear all, close all, clc, subject = 'jonah';
 %[chicoManSortedSessions,jonahManSortedSessions] = manSortedSessions;
 %sessionList = sfnSAbstractSessionList('chico');
 %sessionList = chicoBCIsessions;
 %sessionList = jonahBCIsessions;
-
-sessionList = {'CS20121012';'CS20121015';'CS20121016';'CS20121017';'CS20121018';'CS20121019';'CS20121022';'CS20121023';'CS20121024';'CS20121025';'CS20121026'};  %Chicos SfN Abstract.
-sessionList = {'JS20140318';'JS20140319';'JS20140320';'JS20140321';'JS20140324';'JS20140325';'JS20140326';'JS20140327';'JS20140328'};                            %Jonahs SfN Abstract.
 
 %% Population
 % Get all correct and incorrect epochs
 dirs = initErrDirs('loadSpec');                         % Paths where all data is loaded from and where chronic Recordings analysis are saved
 loadEpochs = 1;
 
+if strcmpi(subject(1),'c')
+    sessionList = {'CS20121012';'CS20121015';'CS20121016';'CS20121017';'CS20121018';'CS20121019';'CS20121022';'CS20121023';'CS20121024';'CS20121025';'CS20121026'};  %Chicos SfN Abstract.
+else
+    sessionList = {'JS20140318';'JS20140319';'JS20140320';'JS20140321';'JS20140324';'JS20140325';'JS20140326';'JS20140327';'JS20140328'};                            %Jonahs SfN Abstract.
+end
+
 % ErrorInfo.session = sprintf('pop%s-%s-%i',char(sessionList(1)),char(sessionList(end)),length(sessionList));
 % ErrorInfo = setDefaultParams(session,dirs);
 
 % Extract or load popEpochs
-if ~loadEpochs, [popCorr,popIncorr,popErrorInfo] = popGetEpochs(sessionList);      % CHECK!
+if ~loadEpochs, 
+    [popCorr,popIncorr,popErrorInfo] = popGetEpochs(sessionList);      % CHECK!
 else
-    if strcmpi(sessionList{1}(1),'c')
+    if strcmpi(subject(1),'c')
         disp('Loading popEpochs for Chico...')
         load('E:\Data\saccErrP\popAnalysis\popCS20121012-CS20121026-11-corrIncorr--rmvNoisTrials-downSamp10[600-600ms]-butt4[1.0-10Hz].mat');
         popErrorInfo.subject = 'chico';
@@ -69,9 +73,6 @@ popErrorInfo.epochInfo.nTgts = 6;
 % Get explained variance
 % popGetExpVar(popDist1Epochs,popDist2Epochs,popDist3Epochs,popDistDcdTgt,sessionList);
 
-% Get number of incorrect trials per target
-[popNumTrialsPerTgt,popNumTrialsPerDist2Tgt,ErrorInfo] = popGetErrNumTrialsPerTgt(sessionList);
-
 % Get explained variance correct and incorrect trials
 popErrorInfo.analysis.balanced = 1;
 popErrorInfo.analysis.typeVble = 'popCorrIncorr';
@@ -91,6 +92,7 @@ plotEpochsPval(expVar,pVals,popErrorInfo)
 
 %% Explained variance per target for correct and error epochs
 popErrorInfo.epochInfo.epochLen = 120; %size(popCorr,3);
+popErrorInfo.analysis.balanced = 1;
 [expVarTgt,nTgt,pValsTgt,muTgt,fTgt,popErrorInfo] = getTgtExpVar(popTgtErrPs,popErrorInfo); %ErrorInfo);
 
 %% Plotting Tgt Explained Variance per channel
@@ -114,6 +116,11 @@ plotEpochsTgtPVal(expVarTgt,pValsTgt,popErrorInfo)
 
 
 %% Exp.Var. previous trial outcome for correct and incorrect trials
+
+% 1000 iter
+subject = 'chico';
+plot_groupIterPrevTrialOutcm(subject)
+
 % Correct
 [expVarCorr,nCorr,pValsCorr,muCorr,FCorr,popErrorInfo] = getEpochsExpVar(corrEpochsCorrPrev,corrEpochsErrPrev,popErrorInfo);
 % Incorrect
@@ -124,6 +131,8 @@ plotEpochsTgtPVal(expVarTgt,pValsTgt,popErrorInfo)
 popPlotChicoJonahErrNormNumTrialsPerTgt
 
 % Plot number of incorrect trials per target
+% Get number of incorrect trials per target
+[popNumTrialsPerTgt,popNumTrialsPerDist2Tgt,ErrorInfo] = popGetErrNumTrialsPerTgt(sessionList);
 popPlotMeanStDevErrNumTrialsPerTgt(sessionsList,popNumTrialsPerTgt,popNumTrialsPerDist2Tgt,ErrorInfo);
 popPlotMeanStDevErrNumTrialsPerTgt(sessionList,popNumTrialsPerDist2Tgt,ErrorInfo)
 

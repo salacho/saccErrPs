@@ -36,6 +36,25 @@ plotParams.arrayColor = [0.8 0.8 0.8];
 timeVals = (1:1:size(expVar,2));            % x vals for imagfesc
 chVals = 1:ErrorInfo.epochInfo.nChs;          % Y vals for imagesc
 
+% % Arrays
+% expVarMod = nan(size(expVar));
+% switch lower(ErrorInfo.session(1))
+%     case 'c', arrayLoc = {'PFC','SEF','FEF'}; 
+%         expVarMod = expVar;
+%     case 'j', arrayLoc = {'SEF','FEF','PFC'}; 
+%         expVarMod(1:32,:) = expVar(65:96,:);
+%         expVarMod(33:96,:) = expVar(1:64,:);
+%         arrayLoc = {'PFC','SEF','FEF'}; 
+%     case 'p'
+%         if strcmp(lower(ErrorInfo.session(4)),'j')
+%             expVarMod(1:32,:) = expVar(65:96,:);
+%             expVarMod(33:96,:) = expVar(1:64,:);
+%             arrayLoc = {'PFC','SEF','FEF'};
+%         else arrayLoc = {'PFC','SEF','FEF'}; 
+%             expVarMod = expVar;
+%         end
+% end
+
 % Arrays
 expVarMod = nan(size(expVar));
 switch lower(ErrorInfo.session(1))
@@ -44,17 +63,21 @@ switch lower(ErrorInfo.session(1))
     case 'j', arrayLoc = {'SEF','FEF','PFC'}; 
         expVarMod(1:32,:) = expVar(65:96,:);
         expVarMod(33:96,:) = expVar(1:64,:);
-        arrayLoc = {'PFC','SEF','FEF'}; 
+        pValsMod(1:32,:) = pVals(65:96,:);
+        pValsMod(33:96,:) = pVals(1:64,:);
+        arrayLoc = {'PFC','SEF','FEF'};
     case 'p'
         if strcmp(lower(ErrorInfo.session(4)),'j')
             expVarMod(1:32,:) = expVar(65:96,:);
             expVarMod(33:96,:) = expVar(1:64,:);
+            pValsMod(1:32,:) = pVals(65:96,:);
+            pValsMod(33:96,:) = pVals(1:64,:);
             arrayLoc = {'PFC','SEF','FEF'};
         else arrayLoc = {'PFC','SEF','FEF'}; 
             expVarMod = expVar;
+            pValsMod = pVals;
         end
 end
-
 
 %% Plotting explained variance of all arrays
 hFig = figure;
@@ -62,7 +85,7 @@ set(hFig,'PaperPositionMode','auto','Position',[1394         126        1006    
     'name',sprintf('%s Correct/Incorrect epochs explained variance for all arrays',ErrorInfo.session),...
     'NumberTitle','off','Visible','on')%ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc((pVals <= ErrorInfo.analysis.ANOVA.pValCrit/(size(expVar,2)*96)));
+hPlot = imagesc(pValsMod <= (ErrorInfo.analysis.ANOVA.pValCrit/(size(expVarMod,2)*96)));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels,'Ytick',YtickPos,'YtickLabel',YtickLabels)
 
 % Plotting array limits

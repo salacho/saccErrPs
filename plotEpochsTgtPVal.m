@@ -25,22 +25,47 @@ plotParams.Color = plotParams.Color(1:length(plotParams.Color)/32:end,:);   % 32
 plotParams.plotColors(1,:) = [0 0 1];                                       % used for errorBar plots
 plotParams.arrayColor = [0.8 0.8 0.8];                                      % used for shadow under the curves
 
+% % Arrays
+% %expVarTgtMod = nan(size(expVarTgt));
+% switch lower(ErrorInfo.session(1))
+%     case 'c', arrayLoc = {'PFC','SEF','FEF'}; 
+%         expVarTgtMod = expVarTgt;
+%     case 'j', arrayLoc = {'SEF','FEF','PFC'}; 
+%         expVarTgtMod(:,1:32,:) = expVarTgt(:,65:96,:);
+%         expVarTgtMod(:,33:96,:) = expVarTgt(:,1:64,:);
+%         arrayLoc = {'PFC','SEF','FEF'}; 
+%     case 'p'
+%         if strcmp(lower(ErrorInfo.session(4)),'j')
+%             expVarTgtMod(:,1:32,:) = expVarTgt(:,65:96,:);
+%             expVarTgtMod(:,33:96,:) = expVarTgt(:,1:64,:);
+%             arrayLoc = {'PFC','SEF','FEF'};
+%         else arrayLoc = {'PFC','SEF','FEF'}; 
+%             expVarTgtMod = expVarTgt;
+%         end
+% end
+
 % Arrays
-%expVarTgtMod = nan(size(expVarTgt));
+expVarTgtMod = nan(size(expVarTgt));
 switch lower(ErrorInfo.session(1))
     case 'c', arrayLoc = {'PFC','SEF','FEF'}; 
         expVarTgtMod = expVarTgt;
+        pValsTgtMod = pValsTgt;
     case 'j', arrayLoc = {'SEF','FEF','PFC'}; 
-        expVarTgtMod(:,1:32,:) = expVarTgt(:,65:96,:);
+        expVarTgtMod(:,1:32,:)  = expVarTgt(:,65:96,:);
         expVarTgtMod(:,33:96,:) = expVarTgt(:,1:64,:);
-        arrayLoc = {'PFC','SEF','FEF'}; 
+        pValsTgtMod(:,1:32,:)   = pValsTgt(:,65:96,:);
+        pValsTgtMod(:,33:96,:)  = pValsTgt(:,1:64,:);
+        arrayLoc = {'PFC','SEF','FEF'};
     case 'p'
-        if strcmp(lower(ErrorInfo.session(4)),'j')
-            expVarTgtMod(:,1:32,:) = expVarTgt(:,65:96,:);
+        if strcmpi((ErrorInfo.session(4)),'j')
+            expVarTgtMod(:,1:32,:)  = expVarTgt(:,65:96,:);
             expVarTgtMod(:,33:96,:) = expVarTgt(:,1:64,:);
+            pValsTgtMod(:,1:32,:)   = pValsTgt(:,65:96,:);
+            pValsTgtMod(:,33:96,:)  = pValsTgt(:,1:64,:);
             arrayLoc = {'PFC','SEF','FEF'};
         else arrayLoc = {'PFC','SEF','FEF'}; 
             expVarTgtMod = expVarTgt;
+            pValsTgtMod = pValsTgt;
         end
 end
 
@@ -81,12 +106,12 @@ for iNorm = 0:1
         getSubPlot(iTgt,plotParams), hold on                                            % Get subplot location
 
         if iNorm == 0
-            %hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96))));            % not normalized for all targets exp. variance
-            hPlot = imagesc((squeeze(pValsTgt(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgt,3)*96)));            % not normalized for all targets exp. variance
+            %hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgtMod(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96))));            % not normalized for all targets exp. variance
+            hPlot = imagesc((squeeze(pValsTgtMod(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgtMod,3)*96)));            % not normalized for all targets exp. variance
             saveTxt = 'nonNorm';
         else
-            %hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgt(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96)))/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
-            hPlot = imagesc(squeeze(pValsTgt(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgt,3)*96)/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
+            %hPlot = imagesc(squeeze(expVarTgtMod(iTgt,:,:).*(pValsTgtMod(iTgt,:,:) <= ErrorInfo.analysis.ANOVA.pValCrit/(120*96)))/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
+            hPlot = imagesc(squeeze(pValsTgtMod(iTgt,:,:)) <= ErrorInfo.analysis.ANOVA.pValCrit/(size(pValsTgtMod,3)*96)/maxExpVarTgt,[0 1]); %max(max(max(expVarTgtMod)))]);      % normalized all targets exp. variance
             saveTxt = 'Norm';
         end
         % Ratio of incorrect/correct trials per target
@@ -153,7 +178,7 @@ end
 %         
 %         % Getting p-values below threshold only
 %         $
-%         pValsSign = pValsTgt.*~(pValsTgt <= ErrorInfo.epochInfo.pValCrit);
+%         pValsSign = pValsTgtMod.*~(pValsTgtMod <= ErrorInfo.epochInfo.pValCrit);
 %         $
 %         % Each tgt
 %         %getSubPlot(iTgt,plotParams), hold on                                            % Get subplot location

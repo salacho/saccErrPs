@@ -44,14 +44,19 @@ switch lower(ErrorInfo.session(1))
     case 'j', arrayLoc = {'SEF','FEF','PFC'}; 
         expVarMod(1:32,:) = expVar(65:96,:);
         expVarMod(33:96,:) = expVar(1:64,:);
-        arrayLoc = {'PFC','SEF','FEF'}; 
+        pValsMod(1:32,:) = pVals(65:96,:);
+        pValsMod(33:96,:) = pVals(1:64,:);
+        arrayLoc = {'PFC','SEF','FEF'};
     case 'p'
         if strcmp(lower(ErrorInfo.session(4)),'j')
             expVarMod(1:32,:) = expVar(65:96,:);
             expVarMod(33:96,:) = expVar(1:64,:);
+            pValsMod(1:32,:) = pVals(65:96,:);
+            pValsMod(33:96,:) = pVals(1:64,:);
             arrayLoc = {'PFC','SEF','FEF'};
         else arrayLoc = {'PFC','SEF','FEF'}; 
             expVarMod = expVar;
+            pValsMod = pVals;
         end
 end
 
@@ -62,7 +67,7 @@ set(hFig,'PaperPositionMode','auto','Position',[1394         126        1006    
     'name',sprintf('%s Correct/Incorrect epochs explained variance for all arrays',ErrorInfo.session),...
     'NumberTitle','off','Visible','on')%ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc((squeeze(expVarMod)).*(pVals <= ErrorInfo.analysis.ANOVA.pValCrit/size(expVar,2)*96));
+hPlot = imagesc((squeeze(expVarMod)).*(pValsMod <= ErrorInfo.analysis.ANOVA.pValCrit/size(expVarMod,2)*96));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize,'Xtick',XtickPos,'XtickLabel',XtickLabels,'Ytick',YtickPos,'YtickLabel',YtickLabels)
 
 % Plotting array limits
