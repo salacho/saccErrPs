@@ -31,8 +31,9 @@ end
 nIter = 1000; 
 fileExist = nan(nIter,1);
 for iIter =1:nIter
-    % load
-    file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',session,iIter);
+    % load                  
+    %file2Load = sprintf('%s_iterCrossFreqCoupling-%i.mat',session,iIter);
+    file2Load = sprintf('%s_iterCrossFreqCoupling-rndShuffle-%i.mat',session,iIter);
     file2Load = fullfile(dirs.DataOut,'popAnalysis',file2Load);
     % exist
     if exist(file2Load,'file')
@@ -48,7 +49,7 @@ for iIter =1:nIter
 end
 
 %% Save
-saveFilename = fullfile(dirs.DataOut,'popAnalysis',sprintf('%s_iterCrossFreqCoupling-allIter.mat',session));
+saveFilename = fullfile(dirs.DataOut,'popAnalysis',sprintf('%s_iterCrossFreqCoupling-allIter-rndShuffle.mat',session));
 save(saveFilename,'preCorrXcorrFreqBand_allIter','preIncorrXcorrFreqBand_allIter',...
     'postCorrXcorrFreqBand_allIter','postIncorrXcorrFreqBand_allIter','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','nIter','-v7.3')
 
