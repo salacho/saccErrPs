@@ -1,4 +1,4 @@
-function plotCrossCorrFreqBand_ErrDiffpostPreDiff_aveGroup1000Iter(preIncorrXcorrFreqBand_allIter,postIncorrXcorrFreqBand_allIter,preCorrXcorrFreqBand_allIter,postCorrXcorrFreqBand_allIter,errDiffFreqTxt,ErrorInfo)
+function plotCrossCorrFreqBand_ErrDiffpostPreDiff_ave1kIter_arrayMean(preIncorrXcorrFreqBand_allIter,postIncorrXcorrFreqBand_allIter,preCorrXcorrFreqBand_allIter,postCorrXcorrFreqBand_allIter,errDiffFreqTxt,ErrorInfo)
 %
 %
 %
@@ -24,6 +24,8 @@ preIncorrXcorrFreqBand = mean(preIncorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIt
 postCorrXcorrFreqBand = mean(postCorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPostCorr)),4);
 postIncorrXcorrFreqBand = mean(postIncorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPostIncorr)),4);
 
+chList = ErrorInfo.chList;
+
 % Get pre-post diff to account for real change due to feedback presentation
 postPreIncorr = postIncorrXcorrFreqBand - preIncorrXcorrFreqBand;
 postPreCorr = postCorrXcorrFreqBand - preCorrXcorrFreqBand;
@@ -38,7 +40,6 @@ else
     ErrDiff = ErrDiffPre;
 end
 
-
 % index
 deltaIndx  = find(strcmp(errDiffFreqTxt,'delta'));
 alphaIndx = find(strcmp(errDiffFreqTxt,'alpha'));
@@ -47,8 +48,7 @@ thetaIndx = find(strcmp(errDiffFreqTxt,'theta'));
 gammaIndx = find(strcmp(errDiffFreqTxt,'gamma'));
 hgammaIndx = find(strcmp(errDiffFreqTxt,'highGam'));
 
-hFig = figure; set(hFig,'PaperPositionMode','auto','position',[1281 1 1280 957],'visible','on');  %
-chList = ErrorInfo.chList;
+hFig = figure; set(hFig,'PaperPositionMode','auto','position',[1823 35 866 717],'visible','on');  %
 
 colorTxt = {'c','y','k','r','b','g'};
 couplingVars = {'Delta','Theta','Alpha','Beta','Gamma','Hgamma'}; 
@@ -56,6 +56,7 @@ hLeg = nan(numel(couplingVars)-1,numel(errDiffFreqTxt));
 lineWidth = 3;
 fontSz = 11;
 
+minMax = [0 0];
 for iFreqBand = 1:numel(errDiffFreqTxt)
     
     CouplingBand = errDiffFreqTxt{iFreqBand};
@@ -80,25 +81,29 @@ for iFreqBand = 1:numel(errDiffFreqTxt)
     
     %% plot
     iPlot = 0;
+    meanArray = 1:3;
     for iCouple = 1:numel(couplingVars)
         subplot(numel(couplingVars),1,iFreqBand)
         % Zero line
-        if iCouple == 1, plot([chList(1),chList(end)],[0 0],'k','linewidth',2), hold on, end
+        if iCouple == 1, plot([1 3],[0 0],'--k','linewidth',1), hold on, end
         % Data
         if iFreqBand ~= iCouple
             iPlot = iPlot + 1;
             eval(sprintf('data2plot = %s;',couplingVars{iCouple}));
+            meanPFC = nanmean(data2plot(1:32));
+            meanSEF = nanmean(data2plot(33:64));
+            meanFEF = nanmean(data2plot(65:96));
+            mean2plot = [meanPFC meanSEF meanFEF];
             % plot
-            hPlot(iFreqBand,iPlot) = plot(chList,data2plot,colorTxt{iCouple}','linewidth',lineWidth); hold on
+            hPlot(iFreqBand,iPlot) = plot(meanArray,mean2plot,'-*','color',colorTxt{iCouple}','linewidth',lineWidth,'markersize',3); hold on
             legendTxt{iFreqBand,iPlot} = sprintf('%s-%s',CouplingBand,couplingVars{iCouple});
+            
+            minMax(1) = min(min(mean2plot),minMax(1));
+            minMax(2) = max(max(mean2plot),minMax(2));
         end
         %ylim([-0.3 0.3])
     end
     % arrays
-    minMax(1) = nanmin([Delta;Theta;Alpha;Beta;Gamma;Hgamma]);
-    minMax(2) = nanmax([Delta;Theta;Alpha;Beta;Gamma;Hgamma]);
-    plot([32,32],minMax,'--k','linewidth',2);
-    plot([64,64],minMax,'--k','linewidth',2),
     set(gca,'fontsize',fontSz);
     axis tight
     
@@ -114,9 +119,9 @@ xlabel('Channel number (channel order: PFC-SEF-FEF)','fontweight','bold','fontsi
 ErrorInfo.dirs = initErrDirs('loadSpec');                         % Paths where all data is loaded from and where chronic Recordings analysis are saved
 
 subplot(numel(couplingVars),1,1);
-title(sprintf('Ave.1000 iter %s:  ErrDiff-prePostDiff Cross-Freq. Amp-Amp. Coupling PFCSEFFEF',ErrorInfo.session),'fontweight','bold','fontsize',13);
+title(sprintf('mean Array Ave.1000 iter %s:  ErrDiff-prePostDiff Cross-Freq. Amp-Amp. Coupling PFCSEFFEF',ErrorInfo.session),'fontweight','bold','fontsize',13);
 saveplotName = sprintf('%s-%s',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',...
-ErrorInfo.session),'ErrDiff-prePostDiff-Fdback-CrossFreqAmpCoupling-PFCSEFFEF_ave1000iterResampReplacing.png');
+ErrorInfo.session),'ErrDiff-prePostDiff-Fdback-CrossFreqAmpCoupling-PFCSEFFEF_ave1kIterResampRepla_meanArray.png');
 saveas(hFig,saveplotName), %close(hFig)
 
 end

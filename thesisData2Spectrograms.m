@@ -505,7 +505,7 @@ end
 plotCrossCorrFreqBand_ErrDiffpostPreDiff(preIncorrXcorrFreqBand,postIncorrXcorrFreqBand,preCorrXcorrFreqBand,postCorrXcorrFreqBand,errDiffFreqTxt,ErrorInfo)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% 100 iter
+%% 1000 iter
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % in cluster run 1000 times
 subject = 'chico';
