@@ -150,14 +150,31 @@ for iTgt = 1:6
     meanPopDist2Tgt(iTgt).corr = squeeze(nanmean(popTgtErrPs(iTgt).corrEpochs,2));
     % Corr st.dev.
     stdPopDist2Tgt(iTgt).corr =  squeeze(nanstd(popTgtErrPs(iTgt).corrEpochs,[],2));
+    
+    if iTgt ==4 
+    disp(iTgt)
+    end
+    
     % Incorr Mean
-    meanPopDist2Tgt(iTgt).dist1 = squeeze(nanmean(popTgt2DistEpochs(iTgt).epochDist1,2));
-    meanPopDist2Tgt(iTgt).dist2 = squeeze(nanmean(popTgt2DistEpochs(iTgt).epochDist2,2));
-    meanPopDist2Tgt(iTgt).dist3 = squeeze(nanmean(popTgt2DistEpochs(iTgt).epochDist3,2));
+    if ndims(popTgt2DistEpochs(iTgt).epochDist1)==3
+        meanPopDist2Tgt(iTgt).dist1 = squeeze(nanmean(popTgt2DistEpochs(iTgt).epochDist1,2));
+    end
+    if ndims(popTgt2DistEpochs(iTgt).epochDist2)==3
+        meanPopDist2Tgt(iTgt).dist2 = squeeze(nanmean(popTgt2DistEpochs(iTgt).epochDist2,2));
+    end
+    if ndims(popTgt2DistEpochs(iTgt).epochDist3)==3
+        meanPopDist2Tgt(iTgt).dist3 = squeeze(nanmean(popTgt2DistEpochs(iTgt).epochDist3,2));
+    end
     % Incorr st.dev.
-    stdPopDist2Tgt(iTgt).dist1 = squeeze(nanstd(popTgt2DistEpochs(iTgt).epochDist1,[],2));
-    stdPopDist2Tgt(iTgt).dist2 = squeeze(nanstd(popTgt2DistEpochs(iTgt).epochDist2,[],2));
-    stdPopDist2Tgt(iTgt).dist3 = squeeze(nanstd(popTgt2DistEpochs(iTgt).epochDist3,[],2));
+    if ndims(popTgt2DistEpochs(iTgt).epochDist1)==3
+        stdPopDist2Tgt(iTgt).dist1 = squeeze(nanstd(popTgt2DistEpochs(iTgt).epochDist1,[],2));
+    end
+    if ndims(popTgt2DistEpochs(iTgt).epochDist2)==3
+        stdPopDist2Tgt(iTgt).dist2 = squeeze(nanstd(popTgt2DistEpochs(iTgt).epochDist2,[],2));
+    end
+    if ndims(popTgt2DistEpochs(iTgt).epochDist3)==3
+        stdPopDist2Tgt(iTgt).dist3 = squeeze(nanstd(popTgt2DistEpochs(iTgt).epochDist3,[],2));
+    end
     % nTrials
     meanPopDist2Tgt(iTgt).dist1numTrials = popTgt2DistEpochs(iTgt).numEpochsPerDist(1);
     meanPopDist2Tgt(iTgt).dist2numTrials = popTgt2DistEpochs(iTgt).numEpochsPerDist(2);

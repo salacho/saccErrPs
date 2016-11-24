@@ -58,7 +58,6 @@ end
 %[popTgtErrPs,popDcdTgt] = popGetTgtErrPs(sessionList,popCorr,popIncorr,popDcdTgt);
 [popTgtErrPs,popTgt2DistEpochs,meanPopTgt,meanPopDist2Tgt,stdPopDist2Tgt,popErrorInfo] = popGetTgtErrPs(sessionList,popCorr,popIncorr,popErrorInfo);
 
-
 % %% Save files
 % tgt2DistSavefilename = 'E:\Data_20160505\dlysac\ErrRPs\popAnalysis\popJS20140318-JS20140328-9-corrIncorr-Tgt2DistEpochs-downSamp1[600-600ms]-butt4[1.0-10Hz].mat';
 % save(tgt2DistSavefilename,'popTgtErrPs','popTgt2DistEpochs','meanPopTgt','meanPopDist2Tgt','stdPopDist2Tgt','ErrorInfo','popDcdTgt','sessionList','-v7.3');
@@ -103,7 +102,7 @@ popErrorInfo.analysis.balanced = 1;
 % ErrorInfoNew = setDefaultParams(sessionList{1},dirs);
 % ErrorInfo.dirs = ErrorInfoNew.dirs;
 % ErrorInfo.dirs.saveFilename = 'E:\Data_20160505\dlysac\ErrRPs\popAnalysis';
-popErrorInfo.session = sprintf('pop%s-%i',sessionList{1}(1:6),numel(sessionList));
+popErrorInfo.session = sprintf('pop%s-%s-%i',sessionList{1},sessionList{end},numel(sessionList));
 popErrorInfo.epochInfo.Tgts = 1:6;
 % ErrorInfo.epochInfo.preOutcomeTime = 600;
 % ErrorInfo.epochInfo.postOutcomeTime = 600;
@@ -140,17 +139,26 @@ popPlotMeanStDevErrNumTrialsPerTgt(sessionsList,popNumTrialsPerTgt,popNumTrialsP
 popPlotMeanStDevErrNumTrialsPerTgt(sessionList,popNumTrialsPerDist2Tgt,ErrorInfo)
 
 % Plot 6 tgt traces for population means 
+popErrorInfo.epochInfo.nTgts = 6;
 ErrorInfo = popErrorInfo;
+
+% Replace empty dist2Tgt with zeros
+[meanPopDist2Tgt,stdPopDist2Tgt] = popDist2TgtAll_fixEmptyDist(meanPopDist2Tgt,stdPopDist2Tgt,popErrorInfo);
 popPlotDist2_6TgtMeanErrorBars(meanPopDist2Tgt,stdPopDist2Tgt,sessionList,popErrorInfo)
 
 %% Get all dist2Tgt from all targets together
 popDist2Tgt = popTgt2DistEpochs; clear popTgt2DistEpochs
 popDist2TgtAll = popDist2Tgt_allTgtTogether(popDist2Tgt);
-[meanPopDist2Tgt,stdPopDist2Tgt] = popDist2Tgt_getMeanStD(popCorr,popDist2TgtAll);
+[meanPopDist2TgtAll,stdPopDist2TgtAll] = popDist2Tgt_getMeanStD(popCorr,popDist2TgtAll);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FOR CLUSTER ONLY!!!
+pop_iterDist2TgtExp(subject)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% PLot dist2Tgt all per array
 popErrorInfo.session = sprintf('pop%s-%s-%i',sessionList{1},sessionList{end}(7:end),numel(sessionList));
-plotPopDist2TgtAll_array(meanPopDist2Tgt,stdPopDist2Tgt,popErrorInfo)
+plotPopDist2TgtAll_array(meanPopDist2TgtAll,stdPopDist2TgtAll,popErrorInfo)
 
 %% Explained variance for Previous Trial Outcome effect
 % Correct
