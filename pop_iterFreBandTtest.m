@@ -63,6 +63,7 @@ if ErrorInfo.analysis.balanced
     
     % Iterate
     for iIter =1:nIter
+        rng(iIter)
         fprintf('T-test for freqBands for iter %i...\n',iIter)
         [expVarFreq(:,:,iIter,:),nFreq(:,iIter),pValsFreq(:,:,iIter,:),muFreq(:,:,:,:,iIter),FFreq(:,:,iIter,:),ErrorInfo] = getFreqBandT_test(popCorrFreqBand,popIncorrFreqBand,ErrorInfo);
     end
@@ -73,7 +74,7 @@ end
 % save freqbands
 ErrorInfo.dirs = dirs;
 ErrorInfo.session = session;
-saveFreqbandName = sprintf('%s-%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterTtest_freqBands.mat');
+saveFreqbandName = sprintf('%s-%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterTtest_freqBands-rgnIter.mat');
 save(saveFreqbandName,'expVarFreq','nFreq','pValsFreq','muFreq','FFreq','ErrorInfo','-v7.3')
 
 end
