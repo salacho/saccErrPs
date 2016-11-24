@@ -32,8 +32,8 @@ end
 
 %% Down sample data!!
 if ~isfield(popErrorInfo.epochInfo,'nCorrBad')
-    ErrorInfo.signalProcess.downSampFactor = 10;
-    [popCorr,popIncorr,ErrorInfo] = popDownSamp(popCorr,popIncorr,ErrorInfo);
+    popErrorInfo.signalProcess.downSampFactor = 10;
+    [popCorr,popIncorr,ErrorInfo] = popDownSamp(popCorr,popIncorr,popErrorInfo);
 end
 
 %% Get epochs for both options in previous trial outcome (correct and
@@ -43,11 +43,12 @@ end
 
 %% T.test previous trial outcome for correct and incorrect trials
 popErrorInfo.analysis.balanced = 1;
-ErrorInfo.analysis.withReplacement = 'true';
+popErrorInfo.analysis.withReplacement = 'true';
 
 if popErrorInfo.analysis.balanced
     % Define vars
     nIter = 1000;
+
     % Correct
     expVarCorr  = nan(size(corrEpochsCorrPrev,1),nIter,size(corrEpochsCorrPrev,3));
     pValsCorr   = nan(size(corrEpochsCorrPrev,1),nIter,size(corrEpochsCorrPrev,3));
@@ -63,6 +64,7 @@ if popErrorInfo.analysis.balanced
     
     % Iterate
     for iIter =1:nIter
+        rng(iIter);
         fprintf('T-test for previous trial outcome for iter %i...\n',iIter)
         [expVarCorr(:,iIter,:),nCorr(:,iIter),pValsCorr(:,iIter,:),muCorr(:,:,:,iIter),FCorr(:,iIter,:),popErrorInfo] = getEpochsExpVar(corrEpochsCorrPrev,corrEpochsErrPrev,popErrorInfo);
         [expVarIncorr(:,iIter,:),nIncorr(:,iIter),pValsIncorr(:,iIter,:),muIncorr(:,:,:,iIter),FIncorr(:,iIter,:),popErrorInfo] = getEpochsExpVar(incorrEpochsCorrPrev,incorrEpochsErrPrev,popErrorInfo);
@@ -74,7 +76,7 @@ else
     [expVarIncorr,nIncorr,pValsIncorr,muIncorr,FIncorr,popErrorInfo] = getEpochsExpVar(incorrEpochsCorrPrev,incorrEpochsErrPrev,popErrorInfo);
 end
 
-saveFilename = fullfile(dirs.DataIn,'popAnalysis',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_Ttest.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
+saveFilename = fullfile(dirs.DataIn,'popAnalysis',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_Ttest-rndSeedIter.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
 save(saveFilename,'expVarCorr','nCorr','pValsCorr','muCorr','FCorr','expVarIncorr','nIncorr','pValsIncorr','muIncorr','FIncorr','nIter','popErrorInfo','-v7.3')
 
 % get 95% upper bound and 5% lower bound and get mean.

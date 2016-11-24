@@ -32,8 +32,8 @@ end
 
 %% Down sample data!!
 if ~isfield(popErrorInfo.epochInfo,'nCorrBad')
-    ErrorInfo.signalProcess.downSampFactor = 10;
-    [popCorr,popIncorr,ErrorInfo] = popDownSamp(popCorr,popIncorr,ErrorInfo);
+    popErrorInfo.signalProcess.downSampFactor = 10;
+    [popCorr,popIncorr,popErrorInfo] = popDownSamp(popCorr,popIncorr,popErrorInfo);
 end
 
 %% Get epochs for both options in previous trial outcome (correct and
@@ -43,7 +43,7 @@ end
 
 %% T.test previous trial outcome for correct and incorrect trials
 popErrorInfo.analysis.balanced = 1;
-ErrorInfo.analysis.withReplacement = 'true';
+popErrorInfo.analysis.withReplacement = 'true';
 
 if popErrorInfo.analysis.balanced
     % Define vars

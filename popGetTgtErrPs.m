@@ -115,12 +115,12 @@ if nargin == 1
 else
     %% If popCorr and popIncorr are ready, only separate them per target
     disp('Separating popCorr and popIncorr...')
-    if strcmpi(popDcdTgt.subject,'chico')
-        popDcdTgt.epochInfo.corrDcdTgt = popDcdTgt.corrDcdTgt;
-        popDcdTgt.epochInfo.corrExpTgt = popDcdTgt.corrExpTgt;
-        popDcdTgt.epochInfo.incorrDcdTgt = popDcdTgt.incorrDcdTgt;
-        popDcdTgt.epochInfo.incorrExpTgt = popDcdTgt.incorrExpTgt;
-    end
+    %     if strcmpi(popDcdTgt.subject,'chico')
+    %         popDcdTgt.epochInfo.corrDcdTgt = popDcdTgt.corrDcdTgt;
+    %         popDcdTgt.epochInfo.corrExpTgt = popDcdTgt.corrExpTgt;
+    %         popDcdTgt.epochInfo.incorrDcdTgt = popDcdTgt.incorrDcdTgt;
+    %         popDcdTgt.epochInfo.incorrExpTgt = popDcdTgt.incorrExpTgt;
+    %     end
     ErrorInfo = popDcdTgt;
     [popTgtErrPs,popDcdTgt] = getTgtErrRPs(popCorr,popIncorr,popDcdTgt);
     % Get popDist2Tgt
@@ -183,7 +183,8 @@ for iTgt = 1:6
     meanPopTgt(iTgt).incorrNumTrials = size(popTgtErrPs(iTgt).incorrEpochs,2);
 end
 
-warning('Need to get all trials of all sessions together to get mean and std regardless of target!!!')
+% DONE AFSG 20161124
+% warning('Need to get all trials of all sessions together to get mean and std regardless of target!!!')
 
 
 % %% Save

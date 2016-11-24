@@ -46,14 +46,18 @@ end
 
 %% Down sample data!!
 if ~isfield(popErrorInfo.epochInfo,'nCorrBad')
-    ErrorInfo.signalProcess.downSampFactor = 10;
-    [popCorr,popIncorr,ErrorInfo] = popDownSamp(popCorr,popIncorr,ErrorInfo);
+    popErrorInfo.signalProcess.downSampFactor = 10;
+    [popCorr,popIncorr,ErrorInfo] = popDownSamp(popCorr,popIncorr,popErrorInfo);
+end
+if popErrorInfo.epochInfo.epochLen == 1200;
+    popErrorInfo.epochInfo.epochLen = 120;
 end
 
 %% Separate in 6 targets
 % [meanPopTgt,meanPopDist2Tgt,stdPopDist2Tgt,ErrorInfo]
 %[popTgtErrPs,popDcdTgt] = popGetTgtErrPs(sessionList,popCorr,popIncorr,popDcdTgt);
 [popTgtErrPs,popTgt2DistEpochs,meanPopTgt,meanPopDist2Tgt,stdPopDist2Tgt,popErrorInfo] = popGetTgtErrPs(sessionList,popCorr,popIncorr,popErrorInfo);
+
 
 % %% Save files
 % tgt2DistSavefilename = 'E:\Data_20160505\dlysac\ErrRPs\popAnalysis\popJS20140318-JS20140328-9-corrIncorr-Tgt2DistEpochs-downSamp1[600-600ms]-butt4[1.0-10Hz].mat';
@@ -114,7 +118,6 @@ plotEpochsTgtExpVar(expVarTgt,pValsTgt,popErrorInfo)
 plotEpochsTgtPVal(expVarTgt,pValsTgt,popErrorInfo)
 %close all
 
-
 %% Exp.Var. previous trial outcome for correct and incorrect trials
 
 % 1000 iter
@@ -137,9 +140,17 @@ popPlotMeanStDevErrNumTrialsPerTgt(sessionsList,popNumTrialsPerTgt,popNumTrialsP
 popPlotMeanStDevErrNumTrialsPerTgt(sessionList,popNumTrialsPerDist2Tgt,ErrorInfo)
 
 % Plot 6 tgt traces for population means 
-popPlotDist2_6TgtMeanErrorBars(meanPopDist2Tgt,stdPopDist2Tgt,sessionList,ErrorInfo)
+ErrorInfo = popErrorInfo;
+popPlotDist2_6TgtMeanErrorBars(meanPopDist2Tgt,stdPopDist2Tgt,sessionList,popErrorInfo)
 
-%% Explained variance for correct and error epochs
+%% Get all dist2Tgt from all targets together
+popDist2Tgt = popTgt2DistEpochs; clear popTgt2DistEpochs
+popDist2TgtAll = popDist2Tgt_allTgtTogether(popDist2Tgt);
+[meanPopDist2Tgt,stdPopDist2Tgt] = popDist2Tgt_getMeanStD(popCorr,popDist2TgtAll);
+
+%% PLot dist2Tgt all per array
+popErrorInfo.session = sprintf('pop%s-%s-%i',sessionList{1},sessionList{end}(7:end),numel(sessionList));
+plotPopDist2TgtAll_array(meanPopDist2Tgt,stdPopDist2Tgt,popErrorInfo)
 
 %% Explained variance for Previous Trial Outcome effect
 % Correct

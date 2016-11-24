@@ -88,6 +88,8 @@ timeVector = specTimeStart + timeVector(1:nTimes);
 nCorr = size(popCorrFreqBand,3);
 nError = size(popIncorrFreqBand,3);
 
+rng('shuffle');
+
 % Iterate
 fprintf('cross-Freq amp-amp coupling for iter %i...\n',iIter)
 % Randomly choosing trials, not always the first ones
@@ -103,7 +105,7 @@ postIncorrXcorrFreqBand = crossCorrFreqBand(popIncorrFreqBand(fdbackStart:end,:,
 %% Save files
 ErrorInfo.dirs = dirs;
 ErrorInfo.session = session;
-saveCrossFreqName = sprintf('%s_%s-%i%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterCrossFreqCoupling',iIter,'.mat');
+saveCrossFreqName = sprintf('%s_%s-%i%s',fullfile(dirs.DataOut,'popAnalysis',session),'iterCrossFreqCoupling-rndShuffle',iIter,'.mat');
 save(saveCrossFreqName,'preCorrXcorrFreqBand','preIncorrXcorrFreqBand',...
     'postCorrXcorrFreqBand','postIncorrXcorrFreqBand','freqBands','errDiffFreqTxt','ErrorInfo','sessionList','iIter','nIter','-v7.3')
                        

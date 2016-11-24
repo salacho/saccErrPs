@@ -113,14 +113,15 @@ for iCh = 1:96
     end; 
     % Adding session and array
     legPlots(end+1) = plot(0,0,'k','LineWidth',plotInfo.lineWidth-0.5);legendTxt{end+1} = sprintf('pop-Ch%i',iCh); %#ok<AGROW>
-    legend(legPlots,legendTxt,'location','Best','FontSize',plotInfo.axisFontSz+8,'FontWeight','bold')                                            % Include legend
+    hLeg = legend(legPlots,legendTxt,'location','Best','FontSize',plotInfo.axisFontSz+8,'FontWeight','bold');                                            % Include legend
     set(legend,'position',[0.47 0.47 0.1 0.1])                              % position normalized
     axis off
+    set(hLeg,'box','off')
     
     clear legendTxt hPlot legPlots
     % Saving plots
     if ErrorInfo.plotInfo.savePlot
-        saveFilename = sprintf('%s-corrIncorr-meanSessions-dist2tgt-Ch%i%s%s[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',popSession),...
+        saveFilename = sprintf('%s-corrIncorr-meanSessions-dist2tgt-Ch%i%s%s[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis','meanDist2Tgt_6Tgt',popSession),...
             iCh,infoStr.strgRef,infoStr.yLimTxt,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
         saveas(hFig,saveFilename)
     end
@@ -130,4 +131,18 @@ end
 clear hPlot hFig legPlots
 
 end 
-    
+   
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function getSubPlot(iTgt,plotInfo)
+% function getSubPlot(iTgt,plotInfo)
+%
+% Selects the subplot based on the target number (iTgt)
+%
+% Andres v1.0
+
+tgtLoc = plotInfo.TgtPlot.subplot{iTgt};
+plotLoc = [tgtLoc,tgtLoc + plotInfo.TgtPlot.colms,tgtLoc + 2*plotInfo.TgtPlot.colms,tgtLoc + 3*plotInfo.TgtPlot.colms];
+subplot(plotInfo.TgtPlot.rows,plotInfo.TgtPlot.colms,plotLoc); hold on,
+
+end
