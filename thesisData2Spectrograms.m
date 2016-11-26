@@ -508,13 +508,16 @@ plotCrossCorrFreqBand_ErrDiffpostPreDiff(preIncorrXcorrFreqBand,postIncorrXcorrF
 %% 1000 iter
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % in cluster run 1000 times
-subject = 'chico';
+subject = 'jonah';
 pop_iterCrossFreqAmpTtest(iIter,subject)
 % aggregate results
 pop_groupIterCrossFreqCoupling_fileExist(subject)
 % load aggregated iters
-load('E:\Data\saccErrP\popAnalysis\popCS20121012-1026-11_iterCrossFreqCoupling-allIter.mat')
-load('E:\Data\saccErrP\popAnalysis\popJS20140318-0328-9_iterCrossFreqCoupling-allIter.mat')
+if strcmp(subject,'chico')
+    load('E:\Data\saccErrP\popAnalysis\24Nov2016_rng_1000Iter\popCS20121012-1026-11_iterCrossFreqCoupling-allIter-rndShuffle.mat')
+else
+    load('E:\Data\saccErrP\popAnalysis\24Nov2016_rng_1000Iter\popJS20140318-0328-9_iterCrossFreqCoupling-allIter-rndShuffle.mat')
+end
 % plot average across iter
 plotCrossCorrFreqBand_ErrDiffpostPreDiff_aveGroup1000Iter(preIncorrXcorrFreqBand_allIter,postIncorrXcorrFreqBand_allIter,preCorrXcorrFreqBand_allIter,postCorrXcorrFreqBand_allIter,errDiffFreqTxt,ErrorInfo)
 

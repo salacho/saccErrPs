@@ -39,10 +39,18 @@ switch host
         dirs.DataOut    = 'D:\Analysis\dlysac\ErrRPs';                      %Add path for chronic Recording analysis to be saved 
         dirs.BCIparams  = '\\millerlab.mit.edu\common\bciproject\cvm\raw';  %Add path where all BCIparams are located
         dirs.PTB        = 'C:\Users\Andres\Documents\MATLAB\toolbox\Psychtoolbox'; % Add path to PsychToolbox
-    case 'Salachos-Carbon';
-        dirs.Code       = '/Users/Salacho/Documents/BU/Miller Lab/chronicRecord';   % Dir w/ data analysis Code
-        dirs.DataIn     = '/Users/Salacho/Documents/BU/Miller Lab/data/mat';        % Dir w/ raw datafiles
-        dirs.DataOut    = '/Users/Salacho/Documents/BU/Miller Lab/data/analyzed'; 	% Dir to output analyzed datafiles and figures to
+    case 'salacho-laptop';
+        dirs.Code       = 'C:\Users\salacho\Documents\Code\monkeyCode\saccErrPs';   % Dir w/ data analysis Code
+        dirs.DataIn     = 'E:\Data\saccErrP';        % Dir w/ raw datafiles
+        dirs.DataOut    = 'E:\Data\saccErrP'; 	% Dir to output analyzed datafiles and figures to
+        dirs.helpers    = 'C:\Users\salacho\Documents\Code\helpers';                % Dir to multiple function used for general analysis
+
+        dirs.chronux    = 'C:\Users\salacho\Documents\MATLAB\Chronux_matlab\chronux_code_2_00';            % Add path to chronux toolbox
+        dirs.BCIparams  = 'E:\Data\saccErrP';                  %Add path where all BCIparams are located
+        dirs.eeglab     = 'C:\Users\salacho\Documents\MATLAB\eeglab9_0_4_5s';       % Folder to eeglab toolbox
+        dirs.PTB        = 'C:\Program Files\MATLAB\toolbox\Psychtoolbox'; % Add path to PsychToolbox
+        addpath(dirs.helpers)
+    
     case 'Salachos-CNS'
         dirs.Code       = 'C:\Users\salacho\Documents\Code\ErrRPs';      % Dir w/ data analysis Code
         dirs.helpers   	= 'C:\Users\salacho\Documents\Code\helpers';      % Dir w/ helpers analysis Code

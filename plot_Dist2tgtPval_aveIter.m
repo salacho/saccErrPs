@@ -1,4 +1,4 @@
-function plotExpVarPrevTrialOutcome_aveIter(expVar,pVals,ErrorInfo)
+function plot_Dist2tgtPval_aveIter(expVar,pVals,ErrorInfo)
 %
 %
 %
@@ -8,6 +8,9 @@ function plotExpVarPrevTrialOutcome_aveIter(expVar,pVals,ErrorInfo)
 % 09 Nov 2014
 
 if ~isfield(ErrorInfo.dirs,'withRngSeedIter'), ErrorInfo.dirs.withRngSeedIter = 0;
+end
+
+if ~isfield(ErrorInfo.plotInfo,'doBonferroni'), ErrorInfo.plotInfo.doBonferroni = 1;
 end
 
 %% Params
@@ -70,14 +73,22 @@ switch lower(ErrorInfo.session(1))
         end
 end
 
+%% Do Bonferroni correction?
+if ErrorInfo.plotInfo.doBonferroni, 
+    ErrorInfo.analysis.typeVble = sprintf('%s-%s',ErrorInfo.analysis.typeVble,'YesBonfer');
+    pValCorrection = (size(expVarMod,2)*96);
+else
+    ErrorInfo.analysis.typeVble = sprintf('%s-%s',ErrorInfo.analysis.typeVble,'NoBonfer');
+    pValCorrection = 1;
+end
 
 %% Plotting explained variance of all arrays
 hFig = figure;
-set(hFig,'PaperPositionMode','auto','Position',[1281 1 1280 948],...
+set(hFig,'PaperPositionMode','auto','Position',[284         -24        1055         837],...
     'name',sprintf('%s for %s trials, exp. var. of effect of previous trial outcome',ErrorInfo.session,ErrorInfo.analysis.typeVble),...
     'NumberTitle','off','Visible',ErrorInfo.plotInfo.visible);
 
-hPlot = imagesc(timeVector,chVector,(squeeze(expVarMod)).*(pValsMod <= ErrorInfo.analysis.ANOVA.pValCrit/(size(expVarMod,2)*96)));
+hPlot = imagesc(timeVector,chVector,(pValsMod <= ErrorInfo.analysis.ANOVA.pValCrit/pValCorrection));
 set(gca,'Ydir','normal','FontSize',plotParams.axisFontSize+8)
 
 % Plotting array limits
@@ -91,22 +102,22 @@ xlabel('Time from feedback onset [s]','FontSize',plotParams.axisFontSize+8,'Font
 ylabel('Electrode #','FontSize',plotParams.axisFontSize + 8,'FontWeight',plotParams.axisFontWeight)
 
 % Title
-title(sprintf('ave1000Iter %s %s prevTrialOut Exp. Var. pVal <= %0.2f',ErrorInfo.session,ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit),'FontSize',plotParams.titleFontSize + 4,'FontWeight',plotParams.titleFontWeight)
+title(sprintf('ave1000Iter %s %s ExpVar. pVal <= %0.2f',ErrorInfo.session,ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit),'FontSize',plotParams.titleFontSize + 4,'FontWeight',plotParams.titleFontWeight)
 
 % Saving figures
 if ErrorInfo.plotInfo.savePlot
     disp('Saving file')
     if any(ErrorInfo.session == 'p')
         if ErrorInfo.dirs.withRngSeedIter
-            saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis','24Nov2016_rng_1000Iter',ErrorInfo.session),...
-                ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+            saveFilename = sprintf('%s-%s-iterDist2Tgt_pVal%0.2f_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis','24Nov2016_rng_1000Iter',ErrorInfo.session),...
+                ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
         else
-            saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
-                ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+            saveFilename = sprintf('%s-%s-iterDist2Tgt_pVal%0.2f_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
+                ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
         end
     else
-        saveFilename = sprintf('%s-%s-prevTrialOutcomeExpVar_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
-            ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+        saveFilename = sprintf('%s-%s-iterDist2Tgt_pVal%0.2f_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
+            ErrorInfo.analysis.typeVble,ErrorInfo.analysis.ANOVA.pValCrit,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
     end
     saveas(hFig,saveFilename)
 end

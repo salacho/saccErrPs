@@ -7,7 +7,8 @@ function plotPvalPrevTrialOutcome_aveIter(expVar,pVals,ErrorInfo)
 %
 % 09 Nov 2014
 
-
+if ~isfield(ErrorInfo.dirs,'withRngSeedIter'), ErrorInfo.dirs.withRngSeedIter = 0;
+end
 
 %% Params
 % Getting layout for array/channel distribution
@@ -95,8 +96,13 @@ title(sprintf('%s %s prevTrialOut Exp. Var. pVal <= %0.2f',ErrorInfo.session,Err
 if ErrorInfo.plotInfo.savePlot
     disp('Saving file')
     if any(ErrorInfo.session == 'p')
-           saveFilename = sprintf('%s-%s-prevTrialOutcomePval_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
-        ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+        if ErrorInfo.dirs.withRngSeedIter
+            saveFilename = sprintf('%s-%s-prevTrialOutcomePval_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis','24Nov2016_rng_1000Iter',ErrorInfo.session),...
+                ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+        else
+            saveFilename = sprintf('%s-%s-prevTrialOutcomePval_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',ErrorInfo.session),...
+                ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);
+        end
     else
         saveFilename = sprintf('%s-%s-prevTrialOutcomePval_ave1000Iter-[%i-%ims]-[%0.1f-%iHz].png',fullfile(ErrorInfo.dirs.DataOut,ErrorInfo.session,ErrorInfo.session),...
             ErrorInfo.analysis.typeVble,ErrorInfo.epochInfo.preOutcomeTime,ErrorInfo.epochInfo.postOutcomeTime,ErrorInfo.epochInfo.filtLowBound,ErrorInfo.epochInfo.filtHighBound);

@@ -112,8 +112,8 @@ for iArray = 1:length(plotInfo.arrayLoc)
             set(gca,'Ydir','normal');
             %colorbar
             % Axis properties
-            title(sprintf('Ch%i',iCh),'FontSize',plotInfo.axisFontSz-1)
-            set(gca,'FontSize',plotInfo.axisFontSz,'YtickLabels',YtickLabels,'Ytick',YtickPos)
+            title(sprintf('Ch%i',iCh),'FontSize',plotInfo.axisFontSz)
+            set(gca,'FontSize',plotInfo.axisFontSz+1,'YtickLabels',YtickLabels,'Ytick',YtickPos)
             axis tight
         end
         
@@ -136,7 +136,7 @@ for iArray = 1:length(plotInfo.arrayLoc)
         
         % Saving figures
         if plotInfo.savePlot
-            saveFilename = sprintf('%s-ErrDiff-Ttest_freqBand%s-%s-clim%i-pval%0.03f%s.png',infoStr.strPrefix,...
+            saveFilename = sprintf('%s-ErrDiff-Ttest_freqBand%s-%s-clim%i-pval%0.2f%s.png',infoStr.strPrefix,...
                 infoStr.strSpecTrans,plotInfo.arrayLoc{iArray},iClim,ErrorInfo.analysis.ANOVA.pValCrit,infoStr.strSuffix);
             saveas(hFig,saveFilename)
             close(hFig)
@@ -162,8 +162,8 @@ for iArray = 1:length(plotInfo.arrayLoc)
         set(gca,'Ydir','normal');
         %colorbar
         % Axis properties
-        title(sprintf('Ch%i',iCh),'FontSize',plotInfo.axisFontSz-1)
-        set(gca,'FontSize',plotInfo.axisFontSz,'YtickLabels',YtickLabels,'Ytick',YtickPos)
+        title(sprintf('Ch%i',iCh),'FontSize',plotInfo.axisFontSz)
+        set(gca,'FontSize',plotInfo.axisFontSz+1,'YtickLabels',YtickLabels,'Ytick',YtickPos)
         axis tight
     end
     
@@ -186,7 +186,7 @@ for iArray = 1:length(plotInfo.arrayLoc)
     
     % Saving figures
     if plotInfo.savePlot
-        saveFilename = sprintf('%s-ErrDiff-Ttest_freqBand%s-%s-onlyPval%0.03f%s.png',infoStr.strPrefix,...
+        saveFilename = sprintf('%s-ErrDiff-Ttest_freqBand%s-%s-onlyPval%0.2f%s.png',infoStr.strPrefix,...
             infoStr.strSpecTrans,plotInfo.arrayLoc{iArray},ErrorInfo.analysis.ANOVA.pValCrit,infoStr.strSuffix);
         saveas(hFig,saveFilename)
         close(hFig)

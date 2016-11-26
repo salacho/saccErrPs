@@ -163,12 +163,17 @@ plotPopDist2TgtAll_array(meanPopDist2TgtAll,stdPopDist2TgtAll,popErrorInfo)
 %% Explained variance for Previous Trial Outcome effect
 % Correct
 popErrorInfo.analysis.typeVble = 'correct';
-plotExpVarPrevTrialOutcome(expVarCorr,pValsCorr,popErrorInfo) 
-plotPvalPrevTrialOutcome(expVarCorr,pValsCorr,popErrorInfo) 
+plotExpVarPrevTrialOutcome_aveIter(expVarCorr,pValsCorr,popErrorInfo) 
+plotPvalPrevTrialOutcome_aveIter(expVarCorr,pValsCorr,popErrorInfo) 
 % Incorrect
 popErrorInfo.analysis.typeVble = 'incorrect';
-plotExpVarPrevTrialOutcome(expVarIncorr,pValsIncorr,popErrorInfo) 
-plotPvalPrevTrialOutcome(expVarIncorr,pValsIncorr,popErrorInfo) 
+plotExpVarPrevTrialOutcome_aveIter(expVarIncorr,pValsIncorr,popErrorInfo) 
+plotPvalPrevTrialOutcome_aveIter(expVarIncorr,pValsIncorr,popErrorInfo) 
+
+
+%% Dist2 Tgt
+plot_groupIterDist2Tgt(subject)
+ 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%  POPULATION SPECTROGRAM   %%%%%%%%%%%%%%%%%%%%%%%%%%%

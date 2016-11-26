@@ -6,9 +6,10 @@ function plot_groupIterPrevTrialOutcm(subject)
 %
 %
 %
-% clear all, clc, close all, subject = 'jonah';
+% clear all, clc, close all, subject = 'chico';
 
 dirs = initErrDirs('loadSpec');                         % Paths where all data is loaded from and where chronic Recordings analysis are saved
+withRngSeedIter = 1;
 
 %% Get sessionsList for subject
 if strcmpi(subject,'chico')
@@ -25,7 +26,11 @@ end
 
 %% Load file
 %loadFilename = fullfile(dirs.DataIn,'popAnalysis',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_corr1Incorr1Corr2_Ttest.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
-loadFilename = fullfile(dirs.DataIn,'popAnalysis',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_Ttest.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
+if withRngSeedIter
+    loadFilename = fullfile(dirs.DataIn,'popAnalysis','24Nov2016_rng_1000Iter',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_Ttest-rndSeedIter.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
+else
+    loadFilename = fullfile(dirs.DataIn,'popAnalysis',sprintf('pop%s-%s-%i_iterPrevTrialOutcome_Ttest.mat',sessionList{1},sessionList{end}(7:end),numel(sessionList)));
+end
 load(loadFilename)
 
 %% Update dirs and paths
@@ -39,6 +44,7 @@ pValsIncorrAve = squeeze(nanmean(pValsIncorr,2));
 %% Explained variance for Previous Trial Outcome effect
 % Correct
 popErrorInfo.analysis.typeVble = 'corr2';
+popErrorInfo.dirs.withRngSeedIter = withRngSeedIter;
 plotExpVarPrevTrialOutcome_aveIter(expVarCorrAve,pValsCorrAve,popErrorInfo) 
 plotPvalPrevTrialOutcome_aveIter(expVarCorrAve,pValsCorrAve,popErrorInfo) 
 % Incorrect

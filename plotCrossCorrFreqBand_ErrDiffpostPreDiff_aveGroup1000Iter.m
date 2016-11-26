@@ -19,10 +19,10 @@ indxPostCorr = find(squeeze(postCorrXcorrFreqBand_allIter(1,1,1,:) == 0));
 indxPostIncorr = find(squeeze(postIncorrXcorrFreqBand_allIter(1,1,1,:) == 0));
 
 %% Save
-preCorrXcorrFreqBand = mean(preCorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPreCorr)),4);
-preIncorrXcorrFreqBand = mean(preIncorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPreIncorr)),4);
-postCorrXcorrFreqBand = mean(postCorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPostCorr)),4);
-postIncorrXcorrFreqBand = mean(postIncorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPostIncorr)),4);
+preCorrXcorrFreqBand = nanmean(preCorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPreCorr)),4);
+preIncorrXcorrFreqBand = nanmean(preIncorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPreIncorr)),4);
+postCorrXcorrFreqBand = nanmean(postCorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPostCorr)),4);
+postIncorrXcorrFreqBand = nanmean(postIncorrXcorrFreqBand_allIter(:,:,:,setdiff(1:nIter,indxPostIncorr)),4);
 
 % Get pre-post diff to account for real change due to feedback presentation
 postPreIncorr = postIncorrXcorrFreqBand - preIncorrXcorrFreqBand;
@@ -114,8 +114,8 @@ xlabel('Channel number (channel order: PFC-SEF-FEF)','fontweight','bold','fontsi
 ErrorInfo.dirs = initErrDirs('loadSpec');                         % Paths where all data is loaded from and where chronic Recordings analysis are saved
 
 subplot(numel(couplingVars),1,1);
-title(sprintf('Ave.1000 iter %s:  ErrDiff-prePostDiff Cross-Freq. Amp-Amp. Coupling PFCSEFFEF',ErrorInfo.session),'fontweight','bold','fontsize',13);
-saveplotName = sprintf('%s-%s',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis',...
+title(sprintf('Ave.1000 iter %s:  ErrDiff-prePostDiff Cross-Freq. Amp-Amp. Coupling PFCSEFFEF rndSeedIter',ErrorInfo.session),'fontweight','bold','fontsize',13);
+saveplotName = sprintf('%s-%s',fullfile(ErrorInfo.dirs.DataOut,'popAnalysis','24Nov2016_rng_1000Iter',...
 ErrorInfo.session),'ErrDiff-prePostDiff-Fdback-CrossFreqAmpCoupling-PFCSEFFEF_ave1000iterResampReplacing.png');
 saveas(hFig,saveplotName), %close(hFig)
 
